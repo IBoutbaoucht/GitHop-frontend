@@ -6,7 +6,9 @@ import {
   Briefcase, Brain, Link as LinkIcon, Cloud, Palette,
   Server, Shield, Database, Smartphone, Gamepad2, Cpu,
   CheckCircle2, ChevronLeft, Terminal, Activity, Layers, Layout, Sigma,
-  ShieldCheck, Search, Medal, RotateCcw
+  ShieldCheck, Search, Medal, RotateCcw,
+  // New imports for Sidebar synchronization
+  Calendar, Clock, History, Sparkles
 } from 'lucide-react';
 
 import { PERSONA_DEFINITIONS } from './constants/personas';
@@ -237,10 +239,20 @@ function DeveloperList() {
 
   const handleSidebarClick = (viewId: string) => {
     setIsMobileMenuOpen(false);
-    if (viewId.includes('repo')) {
+
+    // List of views that belong to the Repositories/Home page
+    const repoViews = [
+        'top-repos', 'trending-repos', 'growing-repos', 'smart-search',
+        'trend-7d', 'trend-30d', 'trend-90d'
+    ];
+    
+    // Navigate to Home/Repo list
+    if (repoViews.includes(viewId)) {
       navigate(`/?view=${viewId}`);
       return;
     }
+
+    // Navigate internally for Developer list
     let newType = 'top';
     if (viewId === 'growing-devs') newType = 'rising';
     if (viewId === 'expert-devs') newType = 'expert';
@@ -326,26 +338,32 @@ function DeveloperList() {
 
   const SidebarItem = ({ id, icon: Icon, label, activeId }: any) => {
     const getActiveIdFromURL = () => {
+      // Logic for Developer Page
       if (viewType === 'expert') return 'expert-devs';
       if (viewType === 'rising') return 'growing-devs';
       if (viewType === 'badge') return 'badge-devs';
       return 'top-devs';
     };
-    const isActive = activeId || (getActiveIdFromURL() === id);
+    
+    // Only set active if it matches and we are actually looking at dev content
+    const calculatedActiveId = activeId || getActiveIdFromURL();
+    // Repo links shouldn't look "active" on the Dev page, only Dev links should
+    const isActuallyActive = calculatedActiveId === id;
+
     return (
       <button
         onClick={() => handleSidebarClick(id)}
         className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
-          isActive
+          isActuallyActive
             ? 'bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white shadow-lg shadow-purple-500/20 border border-white/10'
             : 'text-gray-400 hover:bg-gray-800/50 hover:text-white border border-transparent hover:border-gray-700/50'
         }`}
       >
         <div className="flex items-center gap-3 z-10">
-          <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110 text-gray-500 group-hover:text-purple-400'}`} />
-          <span className={`font-medium tracking-wide ${isActive ? 'text-white' : ''}`}>{label}</span>
+          <Icon className={`w-5 h-5 transition-transform duration-300 ${isActuallyActive ? 'scale-110' : 'group-hover:scale-110 text-gray-500 group-hover:text-purple-400'}`} />
+          <span className={`font-medium tracking-wide ${isActuallyActive ? 'text-white' : ''}`}>{label}</span>
         </div>
-        {isActive && <ChevronRight className="w-4 h-4 text-white/80" />}
+        {isActuallyActive && <ChevronRight className="w-4 h-4 text-white/80" />}
       </button>
     );
   };
@@ -496,15 +514,27 @@ function DeveloperList() {
 
       <div className="flex max-w-[1600px] mx-auto relative z-10">
          
-         {/* Sidebar */}
+         {/* Sidebar - Synchronized with RepositoryList */}
          <aside className="hidden lg:block w-72 sticky top-24 h-[calc(100vh-6rem)] p-6">
           <div className="space-y-8">
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 px-4 flex items-center gap-2">
+                 <History className="w-3 h-3" /> Time Travel
+              </h3>
+              <nav className="space-y-2">
+                <SidebarItem id="trend-7d" icon={Clock} label="Past 7 Days" />
+                <SidebarItem id="trend-30d" icon={Calendar} label="Past 30 Days" />
+                <SidebarItem id="trend-90d" icon={Activity} label="Past 90 Days" />
+              </nav>
+            </div>
+
             <div>
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 px-4">Repositories</h3>
               <nav className="space-y-2">
                 <SidebarItem id="top-repos" icon={Star} label="Top Rated" />
-                <SidebarItem id="trending-repos" icon={Flame} label="Trending Now" />
-                <SidebarItem id="growing-repos" icon={TrendingUp} label="Fast Growing" />
+                <SidebarItem id="trending-repos" icon={Flame} label="Active Coding" />
+                <SidebarItem id="growing-repos" icon={TrendingUp} label="New Arrivals" />
+                <SidebarItem id="smart-search" icon={Sparkles} label="Intelligent Search" />
               </nav>
             </div>
             <div>
@@ -523,11 +553,20 @@ function DeveloperList() {
           <div className="lg:hidden fixed inset-0 z-40 bg-[#0B0C15]/95 backdrop-blur-xl pt-24 px-6 animate-in slide-in-from-left-10 duration-200">
              <div className="space-y-8">
                 <div>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Time Travel</h3>
+                    <div className="space-y-2">
+                        <SidebarItem id="trend-7d" icon={Clock} label="Past 7 Days" />
+                        <SidebarItem id="trend-30d" icon={Calendar} label="Past 30 Days" />
+                        <SidebarItem id="trend-90d" icon={Activity} label="Past 90 Days" />
+                    </div>
+                </div>
+                <div>
                   <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Repositories</h3>
                   <div className="space-y-2">
                     <SidebarItem id="top-repos" icon={Star} label="Top Rated" />
                     <SidebarItem id="trending-repos" icon={Flame} label="Trending Now" />
                     <SidebarItem id="growing-repos" icon={TrendingUp} label="Fast Growing" />
+                    <SidebarItem id="smart-search" icon={Sparkles} label="Intelligent Search" />
                   </div>
                 </div>
                 <div>

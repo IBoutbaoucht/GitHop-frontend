@@ -547,12 +547,6 @@ function RepositoryList() {
                 <SidebarItem view="growing-devs" icon={Zap} label="Rising Stars" />
               </div>
             </div>
-            <div className="pt-6 border-t border-white/5 px-4">
-              <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl p-4 border border-white/5 text-center">
-                <p className="text-xs text-gray-400 mb-3">Want to feature your repo?</p>
-                <button className="text-xs font-bold bg-white text-black px-4 py-2 rounded-lg w-full hover:bg-gray-200 transition-colors">Submit Repository</button>
-              </div>
-            </div>
           </div>
         </aside>
 
