@@ -45,6 +45,7 @@ interface Repository {
 }
 
 const API_BASE = '/api';
+const API_URL = "http://51.107.0.46";
 
 const languageColors: Record<string, string> = {
   JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Java: '#b07219',
@@ -145,14 +146,14 @@ function RepositoryList() {
     // A. SMART SEARCH LOGIC (New)
     if (currentView === 'smart-search') {
       if (!smartQueryParam) return null; // Don't fetch if empty
-      return `${API_BASE}/search/smart?q=${encodeURIComponent(smartQueryParam)}`;
+      return `${API_URL}${API_BASE}/search/smart?q=${encodeURIComponent(smartQueryParam)}`;
     }
 
     const isNewTrendView = ['trend-7d', 'trend-30d', 'trend-90d'].includes(currentView);
 
     // B. EXISTING LOGIC (Standard Views)
     if (urlQuery || activeLanguage || sortBy === 'updated' || isNewTrendView) {
-      let url = `${API_BASE}/repos/filter?q=${encodeURIComponent(urlQuery)}`;
+      let url = `${API_URL}${API_BASE}/repos/filter?q=${encodeURIComponent(urlQuery)}`;
       if (activeLanguage) url += `&language=${encodeURIComponent(activeLanguage)}`;
       const source = getViewSource(currentView);
       url += `&source=${encodeURIComponent(source)}`;
@@ -161,10 +162,10 @@ function RepositoryList() {
       return url; 
     }
 
-    if (currentView === 'growing-repos') return `${API_BASE}/growings-database`;
-    if (currentView === 'trending-repos') return `${API_BASE}/trendings-database`;
+    if (currentView === 'growing-repos') return `${API_URL}${API_BASE}/growings-database`;
+    if (currentView === 'trending-repos') return `${API_URL}${API_BASE}/trendings-database`;
     
-    let url = `${API_BASE}/repos/top?limit=30`;
+    let url = `${API_URL}${API_BASE}/repos/top?limit=30`;
     if (isLoadMore && cursor) {
       url += `&lastStars=${cursor.lastStars}&lastId=${cursor.lastId}`;
     }
@@ -226,7 +227,7 @@ function RepositoryList() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_BASE}/stats`);
+      const res = await fetch(`${API_URL}${API_BASE}/stats`);
       const data = await res.json();
       setStats({
         totalRepos: data.totalRepositories || 0,
