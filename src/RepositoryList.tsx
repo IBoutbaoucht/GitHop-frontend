@@ -45,7 +45,7 @@ interface Repository {
 }
 
 const API_BASE = '/api';
-const API_URL = "http://51.107.0.46";
+const API_URL = "https://51.107.0.46";
 
 const languageColors: Record<string, string> = {
   JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Java: '#b07219',
