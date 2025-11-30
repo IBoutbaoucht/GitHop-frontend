@@ -307,77 +307,110 @@ function Slides() {
   return (
     <>
       <style>{`
+        /* Scrollbar styled with GitHop Purple/Pink */
         .code-scroll::-webkit-scrollbar {
           height: 8px;
           width: 8px;
         }
         .code-scroll::-webkit-scrollbar-track {
-          background: #1e2127; 
+          background: #111827; /* Gray-900 */
         }
         .code-scroll::-webkit-scrollbar-thumb {
-          background: #2C2F33;
-          border-radius: 2px;
+          background: #374151; /* Gray-700 */
+          border-radius: 4px;
         }
         .code-scroll::-webkit-scrollbar-thumb:hover {
-          background: #7A0F13; 
+          background: #9333ea; /* Purple-600 */
         }
+        
         .hljs {
           background: transparent !important;
         }
-        .villain-card {
-          background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                            linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-          background-size: 100% 2px, 3px 100%;
+
+        /* Glassmorphism Card Style */
+        .githop-card {
+           background: rgba(17, 24, 39, 0.7); /* gray-900 / 0.7 */
+           backdrop-filter: blur(16px);
+           -webkit-backdrop-filter: blur(16px);
+           border: 1px solid rgba(255, 255, 255, 0.05); /* border-white/5 */
         }
+
+        /* Ambient Background Animation */
+        @keyframes float {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .blob {
+          animation: float 10s infinite ease-in-out;
+        }
+
         @keyframes fadeSlide {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
-          animation: fadeSlide 0.3s ease-out forwards;
+          animation: fadeSlide 0.4s ease-out forwards;
         }
       `}</style>
 
-      {/* MAIN CONTAINER */}
-      <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0A0A0A] p-4 font-sans text-[#BFC2C7]">
+      {/* MAIN CONTAINER: Global App Background #0B0C15 */}
+      <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0B0C15] p-4 font-sans text-gray-300 relative overflow-hidden">
         
+        {/* AMBIENT BACKGROUND BLOBS (To pop the glass effect) */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] blob"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/10 rounded-full blur-[100px] blob" style={{ animationDelay: '2s' }}></div>
+
+        {/* SLIDE CARD */}
         <div 
           ref={containerRef}
-          className={`bg-[#0A0A0A] overflow-hidden flex flex-col villain-card transition-all duration-300 ${
+          className={`flex flex-col githop-card transition-all duration-300 overflow-hidden ${
             isFullscreen 
-              ? 'w-full h-full' 
-              : 'w-full max-w-6xl aspect-video border border-[#7A0F13] shadow-[0_0_40px_rgba(193,18,31,0.15)] rounded-sm relative'
+              ? 'w-full h-full rounded-none' 
+              : 'w-full max-w-6xl aspect-video shadow-[0_0_40px_rgba(147,51,234,0.15)] rounded-2xl relative'
           }`}
         >
-          {/* Progress Bar */}
-          <div className="h-1.5 bg-[#2C2F33] w-full shrink-0">
+          {/* Progress Bar Container */}
+          <div className="h-1 bg-gray-900 w-full shrink-0">
+            {/* Gradient Progress: Purple-600 to Pink-600 */}
             <div 
-              className="h-full bg-[#C1121F] shadow-[0_0_10px_#C1121F] transition-all duration-300 ease-out"
+              className="h-full bg-gradient-to-r from-purple-600 to-pink-600 shadow-[0_0_10px_rgba(192,132,252,0.5)] transition-all duration-300 ease-out"
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
 
-          {/* Slide Content */}
-          <div className="flex-1 p-12 flex flex-col relative overflow-hidden bg-gradient-to-b from-[#0e0e0e] to-[#0A0A0A]">
+          {/* Slide Content Area */}
+          <div className="flex-1 p-12 flex flex-col relative z-10">
             
             <div key={currentSlideIndex} className="h-full flex flex-col w-full animate-fade-in">
               
-              {/* === TITLE === */}
+              {/* === TITLE SLIDE === */}
               {currentSlide.type === 'title' && (
                 <div className="h-full flex flex-col justify-center items-center text-center">
-                  <h1 className={`font-bold text-[#C1121F] mb-6 tracking-tight drop-shadow-md uppercase font-mono transition-all duration-300 ${
-                    isFullscreen ? 'text-9xl' : 'text-7xl'
+                  <div className="mb-6 p-4 rounded-full bg-purple-500/10 border border-purple-500/20 shadow-[0_0_30px_rgba(147,51,234,0.2)]">
+                     {/* Logo Icon Placeholder */}
+                     <svg className="w-16 h-16 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                     </svg>
+                  </div>
+
+                  {/* GitHop Gradient Text */}
+                  <h1 className={`font-bold tracking-tight mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-300 ${
+                    isFullscreen ? 'text-9xl' : 'text-8xl'
                   }`}>
                     {currentSlide.title}
                   </h1>
-                  <h2 className={`text-[#D4AF37] mb-12 font-light tracking-widest uppercase border-b border-[#7A0F13] pb-2 transition-all duration-300 ${
+
+                  <h2 className={`text-blue-400 mb-12 font-medium tracking-wide uppercase transition-all duration-300 ${
                     isFullscreen ? 'text-4xl' : 'text-2xl'
                   }`}>
                     {currentSlide.subtitle}
                   </h2>
+
                   <div className="flex gap-6">
                     {currentSlide.developers?.map(dev => (
-                      <span key={dev} className={`px-6 py-2 bg-[#1a1a1a] border border-[#7A0F13] text-[#BFC2C7] rounded hover:bg-[#7A0F13] hover:text-white transition-all duration-300 cursor-default ${
+                      <span key={dev} className={`px-6 py-2 bg-gray-800/80 border border-white/5 text-gray-300 rounded-full hover:border-purple-500/50 hover:text-white transition-all duration-300 cursor-default shadow-lg ${
                         isFullscreen ? 'text-2xl' : 'text-base'
                       }`}>
                         {dev}
@@ -387,20 +420,23 @@ function Slides() {
                 </div>
               )}
 
-              {/* === LIST === */}
+              {/* === LIST SLIDE === */}
               {currentSlide.type === 'list' && (
                 <div className="h-full flex flex-col">
-                  <h2 className={`font-bold text-[#D4AF37] mb-8 border-b border-[#2C2F33] pb-4 uppercase tracking-wider transition-all duration-300 ${
+                  {/* Header */}
+                  <h2 className={`font-bold mb-8 pb-4 border-b border-white/5 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-300 ${
                     isFullscreen ? 'text-6xl' : 'text-4xl'
                   }`}>
                     {currentSlide.title}
                   </h2>
-                  <ul className={`space-y-4 text-[#BFC2C7] flex-1 overflow-y-auto transition-all duration-300 ${
+
+                  <ul className={`space-y-6 text-gray-300 flex-1 overflow-y-auto transition-all duration-300 ${
                     isFullscreen ? 'text-3xl' : 'text-xl'
                   }`}>
                     {currentSlide.items?.map((item, idx) => (
                       <li key={idx} className="flex items-start group">
-                         <span className="text-[#C1121F] mr-4 transition-transform group-hover:translate-x-1">➤</span>
+                         {/* Bullet: Pink Arrow */}
+                         <span className="text-pink-500 mr-4 mt-1 transition-transform group-hover:translate-x-1">➤</span>
                          <span 
                            dangerouslySetInnerHTML={{ __html: item }} 
                            className="group-hover:text-white transition-colors"
@@ -408,17 +444,18 @@ function Slides() {
                       </li>
                     ))}
                   </ul>
+
                   {currentSlide.quote && (
-                    <div className={`mt-8 p-6 bg-[#0f0f0f] border-l-4 border-[#C1121F] italic text-[#BFC2C7] rounded-r shadow-lg transition-all duration-300 ${
+                    <div className={`mt-8 p-6 bg-gray-800/50 border-l-4 border-purple-500 italic text-gray-300 rounded-r-lg shadow-lg transition-all duration-300 backdrop-blur-sm ${
                       isFullscreen ? 'text-2xl' : 'text-base'
                     }`}>
-                       <span className="text-[#7A0F13] text-2xl mr-2">"</span>
+                       <span className="text-purple-400 text-2xl mr-2">"</span>
                        {currentSlide.quote.text}
-                       <span className="text-[#7A0F13] text-2xl ml-1">"</span>
-                       <div className={`mt-3 font-bold not-italic text-[#D4AF37] uppercase tracking-wide flex items-center gap-2 ${
+                       <span className="text-purple-400 text-2xl ml-1">"</span>
+                       <div className={`mt-3 font-bold not-italic text-blue-400 uppercase tracking-wide flex items-center gap-2 ${
                          isFullscreen ? 'text-lg' : 'text-sm'
                        }`}>
-                          <span className="h-[1px] w-8 bg-[#D4AF37]"></span>
+                          <span className="h-[1px] w-8 bg-blue-400"></span>
                           {currentSlide.quote.author}
                        </div>
                     </div>
@@ -426,41 +463,50 @@ function Slides() {
                 </div>
               )}
 
-              {/* === CODE === */}
+              {/* === CODE SLIDE === */}
               {currentSlide.type === 'code' && (
                 <div className="h-full flex flex-col">
-                   <div className="flex justify-between items-end border-b border-[#2C2F33] pb-4 mb-6">
-                      <h2 className={`font-bold text-[#D4AF37] uppercase tracking-wide transition-all duration-300 ${
+                   {/* Header Row */}
+                   <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-6">
+                      <h2 className={`font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-300 ${
                         isFullscreen ? 'text-5xl' : 'text-3xl'
                       }`}>
                          {currentSlide.title}
                       </h2>
-                      <span className={`text-[#7A0F13] font-mono border border-[#7A0F13] px-2 py-1 rounded ${
+                      {/* Lang Badge */}
+                      <span className={`text-blue-400 font-mono bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-md ${
                         isFullscreen ? 'text-base' : 'text-xs'
                       }`}>
-                         LANG: {currentSlide.language || 'AUTO'}
+                         {currentSlide.language || 'AUTO'}
                       </span>
                    </div>
                    
                    <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-8">
-                      <div className={`md:w-5/12 overflow-y-auto text-[#BFC2C7] space-y-4 pr-2 transition-all duration-300 ${
+                      {/* Description Panel */}
+                      <div className={`md:w-4/12 overflow-y-auto text-gray-300 space-y-4 pr-2 transition-all duration-300 ${
                         isFullscreen ? 'text-2xl' : 'text-lg'
                       }`}>
                          {currentSlide.description?.map((desc, idx) => (
-                           <p key={idx} className="leading-relaxed border-l-2 border-[#2C2F33] pl-4 hover:border-[#C1121F] transition-colors">
-                             {desc}
-                           </p>
+                           <div key={idx} className="relative pl-4 border-l-2 border-gray-700 hover:border-pink-500 transition-colors">
+                             <p className="leading-relaxed">{desc}</p>
+                           </div>
                          ))}
                       </div>
 
-                      <div className="md:w-7/12 bg-[#1e2127] rounded border border-[#2C2F33] p-1 overflow-hidden shadow-inner flex flex-col">
-                         {/* Header */}
-                         <div className="bg-[#15171b] px-3 py-2 flex gap-2 border-b border-[#2C2F33]">
-                           <div className="w-3 h-3 rounded-full bg-[#C1121F]"></div>
-                           <div className="w-3 h-3 rounded-full bg-[#D4AF37]"></div>
-                           <div className="w-3 h-3 rounded-full bg-[#2C2F33]"></div>
+                      {/* Code Editor Window */}
+                      <div className="md:w-8/12 bg-[#1f2937] rounded-xl border border-white/5 overflow-hidden shadow-2xl flex flex-col">
+                         {/* Editor Header */}
+                         <div className="bg-[#111827] px-4 py-3 flex gap-2 border-b border-white/5 items-center">
+                           <div className="flex gap-2 mr-4">
+                              <div className="w-3 h-3 rounded-full bg-red-400/80"></div>
+                              <div className="w-3 h-3 rounded-full bg-yellow-400/80"></div>
+                              <div className="w-3 h-3 rounded-full bg-green-400/80"></div>
+                           </div>
+                           <span className="text-xs text-gray-500 font-mono">src/{currentSlide.title.toLowerCase().replace(/\s+/g, '-')}.ts</span>
                          </div>
-                         <div className="overflow-auto code-scroll flex-1 p-4">
+
+                         {/* Code Content */}
+                         <div className="overflow-auto code-scroll flex-1 p-6 bg-[#0d1117]/50">
                            <pre 
                              className={`hljs bg-transparent font-mono whitespace-pre !p-0 transition-all duration-300 ${
                                isFullscreen ? 'text-lg' : 'text-sm'
@@ -473,39 +519,40 @@ function Slides() {
                 </div>
               )}
 
-              {/* === IMAGE === */}
+              {/* === IMAGE SLIDE === */}
               {currentSlide.type === 'image' && (
                  <div className="h-full flex flex-col">
-                    <h2 className={`font-bold text-[#D4AF37] mb-6 border-b border-[#2C2F33] pb-4 uppercase transition-all duration-300 ${
+                    <h2 className={`font-bold mb-6 border-b border-white/5 pb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent transition-all duration-300 ${
                       isFullscreen ? 'text-5xl' : 'text-3xl'
                     }`}>
                        {currentSlide.title}
                     </h2>
-                    <div className="flex-1 flex items-center justify-center bg-[#050505] rounded border border-[#2C2F33] relative group">
-                       <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#C1121F]"></div>
-                       <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#C1121F]"></div>
+                    <div className="flex-1 flex items-center justify-center bg-gray-900/50 rounded-xl border border-white/5 relative group p-2">
+                       {/* Corner Accents (Purple/Pink) */}
+                       <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-purple-500 rounded-tl-lg"></div>
+                       <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-pink-500 rounded-br-lg"></div>
                        
-                       <div className="text-center w-full h-full flex items-center justify-center p-8">
+                       <div className="text-center w-full h-full flex items-center justify-center p-4">
                           <img 
                             src={currentSlide.imageSrc} 
                             alt={currentSlide.title}
-                            className="max-h-[50vh] max-w-full object-contain shadow-2xl rounded-sm border border-[#2C2F33] group-hover:scale-[1.02] transition-transform duration-500"
+                            className="max-h-[60vh] max-w-full object-contain shadow-2xl rounded-lg border border-white/5 group-hover:scale-[1.01] transition-transform duration-500"
                           />
                        </div>
                     </div>
                  </div>
               )}
 
-              {/* === SIMPLE === */}
+              {/* === SIMPLE SLIDE === */}
               {currentSlide.type === 'simple' && (
                  <div className="h-full flex flex-col justify-center items-center text-center p-12">
-                    <h2 className={`font-bold text-[#C1121F] mb-12 uppercase tracking-tight drop-shadow-[0_2px_10px_rgba(193,18,31,0.5)] transition-all duration-300 ${
+                    <h2 className={`font-bold mb-12 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm transition-all duration-300 ${
                       isFullscreen ? 'text-8xl' : 'text-6xl'
                     }`}>
                        {currentSlide.title}
                     </h2>
                     {currentSlide.content && (
-                      <p className={`text-[#BFC2C7] max-w-4xl font-light leading-relaxed border-t border-b border-[#2C2F33] py-8 transition-all duration-300 ${
+                      <p className={`text-gray-300 max-w-4xl font-light leading-relaxed border-t border-b border-white/5 py-10 transition-all duration-300 ${
                         isFullscreen ? 'text-5xl' : 'text-3xl'
                       }`}>
                          {currentSlide.content}
@@ -517,48 +564,54 @@ function Slides() {
           </div>
 
           {/* FOOTER */}
-          <div className="bg-[#0f0f0f] border-t border-[#2C2F33] p-4 flex justify-between items-center text-[#757575] text-sm font-mono shrink-0">
-             <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-[#C1121F] rounded-full animate-pulse"></span>
-                <span className="uppercase tracking-widest text-[#BFC2C7]">GITHOP // SYSTEM</span>
+          <div className="bg-[#111827]/90 border-t border-white/5 p-4 flex justify-between items-center text-gray-500 text-sm font-mono shrink-0 backdrop-blur-md z-20">
+             <div className="flex items-center gap-3">
+                {/* Active Indicator Pulse (Green-400) */}
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span className="tracking-widest text-gray-400 uppercase">GITHOP v2.0</span>
              </div>
              
              <div className="flex gap-4 items-center">
                 <button 
                   onClick={toggleFullscreen} 
-                  className="p-2 rounded hover:text-[#D4AF37] transition-colors duration-200" 
+                  className="p-2 rounded-full hover:bg-white/5 hover:text-purple-400 transition-colors duration-200" 
                   title="Toggle Fullscreen (F)"
                 >
                    {!isFullscreen ? (
-                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                    ) : (
-                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
                    )}
                 </button>
 
-                <button 
-                  onClick={prevSlide} 
-                  disabled={currentSlideIndex === 0}
-                  className="p-2 rounded hover:text-[#D4AF37] disabled:opacity-20 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m15 18-6-6 6-6" />
-                   </svg>
-                </button>
-                
-                <span className="text-[#D4AF37]">
-                  {currentSlideIndex + 1} <span className="text-[#2C2F33]">/</span> {slides.length}
-                </span>
-                
-                <button 
-                  onClick={nextSlide} 
-                  disabled={currentSlideIndex === slides.length - 1}
-                  className="p-2 rounded hover:text-[#D4AF37] disabled:opacity-20 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m9 18 6-6-6-6" />
-                   </svg>
-                </button>
+                <div className="flex items-center gap-1 bg-gray-800 rounded-lg px-2 py-1 border border-white/5">
+                  <button 
+                    onClick={prevSlide} 
+                    disabled={currentSlideIndex === 0}
+                    className="p-1 rounded hover:text-purple-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                     </svg>
+                  </button>
+                  
+                  <span className="text-gray-300 mx-2 text-xs">
+                    {currentSlideIndex + 1} / {slides.length}
+                  </span>
+                  
+                  <button 
+                    onClick={nextSlide} 
+                    disabled={currentSlideIndex === slides.length - 1}
+                    className="p-1 rounded hover:text-purple-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m9 18 6-6-6-6" />
+                     </svg>
+                  </button>
+                </div>
              </div>
           </div>
 
