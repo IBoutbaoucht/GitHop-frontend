@@ -54,17 +54,17 @@ interface SlideData {
 
 // --- WORKFLOW DATA ---
 const dataProcessingWorkflow: WorkflowStep[] = [
-    { step: 1, title: 'Target Identification', description: 'Scouts run queries to identify new candidate repositories.', codeFocus: 'developerScout.ts', colorKey: 'blue' },
+    { step: 1, title: 'Target Identification', description: 'Scouts run queries to identify new candidate repositories.', codeFocus: 'Scouting ts scripts.', colorKey: 'blue' },
     { step: 2, title: 'Stub Initialization', description: 'Targets inserted with minimal metadata (ID, Name).', codeFocus: 'db.ts', colorKey: 'yellow' },
-    { step: 3, title: 'Stub Hydration', description: 'Worker identifies incomplete repos for enrichment.', codeFocus: 'this.hydrateStubs()', colorKey: 'purple' },
+    { step: 3, title: 'Stub Hydration', description: 'Worker identifies incomplete repos for enrichment.', codeFocus: 'hydrateStubs()', colorKey: 'purple' },
     { step: 4, title: 'Deep GraphQL Fetch', description: 'Fetches complex metrics in one optimized query.', codeFocus: 'fetchAndEnrichRepo', colorKey: 'green' },
-    { step: 5, title: 'Hybrid Contributor Check', description: 'Fast REST fetch first, fallback to GraphQL scan.', codeFocus: 'updateMissingContributors()', colorKey: 'pink' },
-    { step: 6, title: 'Scoring & Ranking', description: 'Algorithms calculate Exploration Score & Velocity.', codeFocus: 'scoreCalculation.ts', colorKey: 'cyan' },
+    { step: 5, title: 'Hybrid Contributor Check', description: 'Fast REST fetch first, fallback to GraphQL scan.', codeFocus: 'MissingContributors()', colorKey: 'pink' },
+    { step: 6, title: 'Scoring & Ranking', description: 'Algorithms calculate Exploration Score & Velocity.', codeFocus: 'Algorithms !', colorKey: 'cyan' },
     { step: 7, title: 'Final DB Commit', description: 'Updates row, sets sync_status = "complete".', codeFocus: 'db.ts', colorKey: 'blue' },
 ];
 
 const historicalVelocityWorkflow: WorkflowStep[] = [
-    { step: 1, title: 'Trigger & Timeframe', description: 'Admin endpoint defines Growth Delta timeframe.', codeFocus: 'newService.ts', colorKey: 'blue' },
+    { step: 1, title: 'Trigger & Timeframe', description: 'Admin endpoint defines Growth Delta timeframe.', codeFocus: 'Service ts Script', colorKey: 'blue' },
     { step: 2, title: 'BigQuery Scan', description: 'SQL query executed against GH Archive dataset.', codeFocus: 'GH Archive SQL', colorKey: 'yellow' },
     { step: 3, title: 'Growth Delta Extraction', description: 'Returns Growth Delta (new stars) in memory.', codeFocus: 'Map<FullName, Delta>', colorKey: 'purple' },
     { step: 4, title: 'Repo Lookup', description: 'Validates names against database to find IDs.', codeFocus: 'db.findReposByNames', colorKey: 'green' },
@@ -245,13 +245,13 @@ const results = await db.vectorQuery(embeddings, intent);`
   // PHASE 2: ARCHITECTURE & DESIGN
   {
     type: 'code',
-    title: 'Smart Rate Limiting',
-    subtitle: 'Contributor Fetch Fallback Strategy',
+    title: 'Smart Rate Limiting : Deep Dive Example',
+    subtitle: 'Special Case : Contributor Fetch Fallback Strategy',
     theme: 'architecture',
     description: [
-      'Problem: Naive fetching hits API limits (403) or GraphQL list limits (204).',
-      'Solution: Use Strategy Pattern to define a tiered fetching approach.',
-      'Execution: Attempt fast REST (Tier 1). If failure, fallback to slow, expensive GraphQL History Scan (Tier 2).'
+      'Problem: Naive fetching hits API limits .',
+      'Solution: Use Strategy Pattern .',
+      'Execution: Twos Tiers.'
     ],
     code: `// The "Smart" Fetching Logic
 private async fetchAndSaveContributors(repoGithubId: string, fullName: string): Promise<void> {
@@ -274,7 +274,7 @@ private async fetchAndSaveContributors(repoGithubId: string, fullName: string): 
   },
   {
     type: 'code',
-    title: 'Deep Metric Enrichment',
+    title: 'Deep Metric Enrichment : Optimizing Credits Usage',
     subtitle: 'Optimized GraphQL Hydration Query',
     theme: 'architecture',
     language: 'graphql',
@@ -311,7 +311,7 @@ query RepoHydrate($owner: String!, $name: String!) {
     theme: 'architecture',
     language: 'javascript',
     description: [
-      'The goal of the entire multi-stage ingestion pipeline is to serve all required metrics from a single, fast database query, eliminating runtime API latency.',
+      'The goal is eliminating runtime API latency.',
       'Result: The frontend only needs to fetch pre-calculated data (score, growth, persona, metadata) from PostgreSQL, ensuring sub-100ms response times.',
       'Evidence: All complex calculations (scoring, persona classification) are pushed to the background workers.'
     ],
