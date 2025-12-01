@@ -48,8 +48,8 @@ interface SlideData {
   workflowSteps?: WorkflowStep[];
   theme?: 'analysis' | 'architecture';
   link?: string; // <--- ADD THIS LINE
-  leftContent?: { title: string; text: string };
-  rightContent?: { title: string; text: string };
+  leftContent?: { title: string; text?: string ; listItems?: string[]};
+  rightContent?: { title: string; text?: string ; listItems?: string[] };
 }
 
 // --- WORKFLOW DATA ---
@@ -80,14 +80,14 @@ const slides: SlideData[] = [
     type: 'title',
     title: 'GitHop',
     subtitle: 'From Requirements to Reality',
-    developers: ['Imad BOUTBAOUCHT', 'Ilias SKIRIBA'],
-    content: 'Project Analysis & Implementation Review • Oct 2025',
+    developers: ['Imad BOUTBAOUCHT', 'Ilyass SKIRIBA'],
+    content: 'Project Analysis & Implementation Review ',
     theme: 'analysis'
   },
   {
     type: 'simple',
     title: 'What is GitHop?',
-    content: 'GitHop is a social intelligence engine for Open Source. It aggregates scattered GitHub activity into a curated, algorithmic feed—transforming raw data into meaningful developer personas and trending insights.',
+    content: 'A social intelligence engine that transforms scattered GitHub activity into a curated feed of trends and developer insights.',
     theme: 'analysis'
   },
   {
@@ -97,11 +97,20 @@ const slides: SlideData[] = [
     theme: 'analysis',
     leftContent: {
       title: 'The Problem',
-      text: 'Developers suffer from information overload. GitHub Trending is superficial, lacking semantic filtering. Identifying active peers or finding specific stacks requires manual excavation.'
+      // We use listItems now instead of text
+      listItems: [
+        'Getting news in the Open-Source world is hard.',
+        'GitHub Trending is too superficial and lacks deep semantic filtering.',
+        'Finding developers in a specific tech stack feels like mining in a dark cave.'
+      ]
     },
     rightContent: {
       title: 'The Solution',
-      text: 'A unified "Social Feed" for code. We implemented a system that aggregates Repositories, Developers, and Topics, powered by Vector Search (AI) and automated background workers.'
+      listItems: [
+        'A unified feed for the entire open-source ecosystem.',
+        'AI Vector Search for semantic discovery.',
+        'Topic-level insights.'
+      ]
     }
   },
   {
@@ -728,9 +737,16 @@ function Slides() {
 {/* --- 1. TITLE / LAUNCH SLIDE --- */}
               {currentSlide.type === 'title' && (
                 <div className="h-full flex flex-col justify-center items-center text-center relative">
-                   <div className={`mb-8 w-20 h-20 bg-gradient-to-br ${currentSlide.link ? 'from-green-500 to-emerald-600' : 'from-purple-600 to-pink-600'} rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-white/10 ${currentSlide.link ? 'shadow-green-500/20 animate-pulse' : 'shadow-purple-500/20'}`}>
+
+                  {/* ADD THIS CHECK: Only render icon if it is NOT the first slide (index 0) */}
+                  {currentSlideIndex !== 0 && (
+                    <div className={`mb-8 w-20 h-20 bg-gradient-to-br ${currentSlide.link ? 'from-green-500 to-emerald-600' : 'from-purple-600 to-pink-600'} rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-white/10 ${currentSlide.link ? 'shadow-green-500/20 animate-pulse' : 'shadow-purple-500/20'}`}>
                       {currentSlide.link ? <Zap className="w-10 h-10 text-white" /> : <Code2 className="w-10 h-10 text-white" />}
-                   </div>
+                    </div>
+                  )}
+                   {/* <div className={`mb-8 w-20 h-20 bg-gradient-to-br ${currentSlide.link ? 'from-green-500 to-emerald-600' : 'from-purple-600 to-pink-600'} rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-white/10 ${currentSlide.link ? 'shadow-green-500/20 animate-pulse' : 'shadow-purple-500/20'}`}>
+                      {currentSlide.link ? <Zap className="w-10 h-10 text-white" /> : <Code2 className="w-10 h-10 text-white" />}
+                   </div> */}
 
                   <h1 className={`font-black tracking-tight mb-4 text-white drop-shadow-sm ${
                     isFullscreen ? 'text-8xl' : 'text-7xl'
@@ -769,7 +785,7 @@ function Slides() {
                       <div key={dev} className="flex flex-col items-center group">
                         <span className="text-sm font-bold tracking-wider text-gray-300 group-hover:text-white transition-colors uppercase">{dev}</span>
                         <span className={`text-[10px] ${currentSlide.link ? 'text-green-400' : accentText} uppercase font-bold`}>
-                          {currentSlide.link ? 'Status: Active' : 'Engineer'}
+                          {currentSlide.link ? 'Status: Active' : ''}
                         </span>
                       </div>
                     ))}
@@ -816,9 +832,19 @@ function Slides() {
                           <h3 className="text-xl font-bold text-red-400 mb-4 uppercase tracking-wider">
                              {currentSlide.leftContent?.title}
                           </h3>
-                          <p className="text-gray-400 text-lg leading-relaxed flex-1">
-                              {currentSlide.leftContent?.text}
-                          </p>
+                          
+                          {/* NEW LOGIC: Check for listItems, otherwise show text */}
+                          {currentSlide.leftContent?.listItems ? (
+                            <ul className="text-gray-400 text-lg leading-relaxed flex-1 list-disc pl-5 space-y-3">
+                              {currentSlide.leftContent.listItems.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-400 text-lg leading-relaxed flex-1">
+                                {currentSlide.leftContent?.text}
+                            </p>
+                          )}
                       </div>
 
                       {/* Right: Solution */}
@@ -829,9 +855,19 @@ function Slides() {
                           <h3 className={`text-xl font-bold mb-4 uppercase tracking-wider ${accentText}`}>
                              {currentSlide.rightContent?.title}
                           </h3>
-                          <p className="text-gray-300 text-lg leading-relaxed flex-1">
-                              {currentSlide.rightContent?.text}
-                          </p>
+                          
+                          {/* 👇 NEW LOGIC: Check for listItems on the Right side */}
+                          {currentSlide.rightContent?.listItems ? (
+                            <ul className="text-gray-300 text-lg leading-relaxed flex-1 list-disc pl-5 space-y-3">
+                              {currentSlide.rightContent.listItems.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-300 text-lg leading-relaxed flex-1">
+                                {currentSlide.rightContent?.text}
+                            </p>
+                          )}
                       </div>
                   </div>
                 </div>
