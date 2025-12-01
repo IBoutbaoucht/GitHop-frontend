@@ -1,9 +1,65 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import hljs from 'highlight.js';
+import mermaid from 'mermaid';
 import 'highlight.js/styles/atom-one-dark.css';
 
+// --- MERMAID INITIALIZATION (Applied once globally) ---
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#0B0C15', 
+    secondaryColor: '#1f2937', 
+    edgeLabelBackground: '#0B0C15',
+    tertiaryColor: '#58a6ff', // Node Background
+    lineColor: '#c084fc', // Links (Purple/Pink)
+    fontFamily: 'monospace',
+    nodeBorder: '#58a6ff',
+    clusterBkg: '#0B0C15',
+    clusterBorder: '#58a6ff',
+  }
+});
+
+// Define a type for the component's props for clarity
+type MermaidProps = {
+  chart: string;
+  id: number;
+};
+
+// --- HELPER COMPONENT: Renders the Mermaid Diagram (FIXED for TypeScript/Flicker) ---
+const MermaidRenderer = ({ chart, id }: MermaidProps) => {
+  // Explicitly type the ref as an HTMLDivElement
+  const ref = useRef<HTMLDivElement>(null); 
+  const chartId = `mermaid-chart-${id}`;
+
+  useEffect(() => {
+    // Check if ref exists before accessing innerHTML
+    if (ref.current) { 
+      ref.current.innerHTML = ''; // Clear previous content
+
+      // Render the new chart string
+      mermaid.render(chartId, chart)
+        .then(({ svg }) => {
+          if (ref.current) {
+            // Inject the generated SVG
+            ref.current.innerHTML = svg;
+          }
+        })
+        .catch(error => {
+          if (ref.current) {
+             ref.current.innerHTML = `<p style="color: red;">Error rendering chart: ${error.message}</p>`;
+          }
+        });
+    }
+  // Reruns only when chart content or slide index changes
+  }, [chart, id]); 
+
+  // Return the empty container div for React to manage the reference
+  return <div id={chartId} ref={ref} className="mermaid-output w-full h-full flex justify-center items-center text-gray-400">Rendering Data Flow...</div>;
+};
+
 // --- TYPES ---
-type SlideType = 'title' | 'simple' | 'split' | 'list' | 'code' | 'table' | 'grid';
+type SlideType = 'title' | 'simple' | 'split' | 'list' | 'code' | 'table' | 'grid' | 'diagram';
 
 interface Quote {
   text: string;
@@ -34,12 +90,98 @@ interface SlideData {
   theme?: 'analysis' | 'architecture';
   leftContent?: { title: string; text: string };
   rightContent?: { title: string; text: string };
+  mermaidChart?: string; // New property for diagrams
 }
 
-// --- DATA ---
+// --- MERMAID CHART DATA ---
+const interactionDiagram = `
+graph TD
+    User((User))
+    
+    subgraph System [GitHop System]
+        direction LR
+        View[View Social Feed]
+        FetchRepos[Fetch & Rank Repos]
+        FetchDevs[Fetch & Rank Developers]
+        FetchTopics[Fetch & Rank Topics]
+        Render[Render Feed UI]
+        Filter[Filter Feed by Topic]
+        ProcessFilter[Process Filter Request]
+    end
+    
+    External[Go to GitHub]
+
+    User --> View
+    View --> FetchRepos
+    View --> FetchDevs
+    View --> FetchTopics
+    FetchRepos --> Render
+    FetchDevs --> Render
+    FetchTopics --> Render
+    
+    User --> Filter
+    Filter --> ProcessFilter
+    ProcessFilter --> Render
+    
+    User -->|Click Item| External
+`;
+
+const dataFlowDiagram = `
+flowchart LR
+    GH[GitHub API]
+    Raw{Raw Data: Repos, Users}
+    Engine[Processing & Ranking Engine]
+    Agg[Aggregated & Ranked Data]
+    DB[(Database)]
+    Server[Web Server]
+    Client[Web Client]
+
+    %% Backend Flow
+    GH --> Raw
+    Raw --> Engine
+    Engine --> Agg
+    Agg --> DB
+
+    %% User Flow
+    Client -- Request Feed --> Server
+    Server -- Fetch Processed Data --> DB
+    DB -- Return Data --> Server
+    Server -- Render JSON/HTML --> Client
+`;
+
+const backendProcessDiagram = `
+flowchart TD
+    subgraph Worker ["Background Worker (Cron)"]
+        Trigger(Scheduled Trigger)
+        Fetch[Fetch Data from GitHub API]
+        Calc[Calculate Metrics: Explore Score, Growth]
+        Rank[Rank Items per Category]
+        Mix[Aggregate & Mix Rankings]
+        Store[Store in Database]
+    end
+
+    subgraph UserFlow ["User Interaction"]
+        Request[User Requests Page]
+        Retrieve[Retrieve Master Feed List]
+        Render[Render JSON/HTML]
+        Send[Send to User Browser]
+    end
+
+    DB[(Database)]
+
+    %% Connections
+    Trigger --> Fetch --> Calc --> Rank --> Mix --> Store
+    Store --> DB
+    
+    Request --> Retrieve
+    DB --> Retrieve
+    Retrieve --> Render --> Send
+`;
+
+// --- SLIDE DATA ARRAY (28 Slides) ---
 const slides: SlideData[] = [
   // ==========================================
-  // PHASE 1: ANALYSIS & REQUIREMENTS (12 Slides - Cyan/Blue Theme)
+  // PHASE 1: ANALYSIS & REQUIREMENTS (12 Slides)
   // ==========================================
   {
     type: 'title',
@@ -178,8 +320,33 @@ const results = await db.vectorQuery(embeddings, intent);`
   {
     type: 'simple',
     title: 'Analysis Conclusion',
-    content: '100% of Critical Requirements Met. Ready for Technical Deep Dive.',
+    content: '100% of Critical Requirements Met. Proceeding to Technical Deep Dive.',
     theme: 'analysis'
+  },
+
+  // ==========================================
+  // PHASE 1.5: INTERACTION DIAGRAMS (3 Slides - Bridge)
+  // ==========================================
+  {
+    type: 'diagram',
+    title: 'High-Level Interaction Diagram',
+    subtitle: 'SRS Figure 1: User Experience Flow',
+    theme: 'analysis',
+    mermaidChart: interactionDiagram
+  },
+  {
+    type: 'diagram',
+    title: 'Data Flow Diagram',
+    subtitle: 'SRS Figure 2: Data Life Cycle',
+    theme: 'analysis',
+    mermaidChart: dataFlowDiagram
+  },
+  {
+    type: 'diagram',
+    title: 'Backend Process Diagram',
+    subtitle: 'SRS Figure 3: Worker vs. User Interaction',
+    theme: 'analysis',
+    mermaidChart: backendProcessDiagram
   },
 
   // ==========================================
@@ -276,7 +443,6 @@ pool.on('error', (err) => {
   console.error("❌ Unexpected Error", err);
 });`
   },
-  // --- MISSING PATTERNS RE-INSERTED ---
   {
     type: 'code',
     title: 'Chain of Responsibility',
@@ -530,6 +696,7 @@ function Slides() {
   const accentText = isAnalysis ? 'text-cyan-400' : 'text-purple-400';
   const accentBorder = isAnalysis ? 'border-cyan-500/50' : 'border-purple-500/50';
   const ambientBg = isAnalysis ? 'bg-cyan-900/10' : 'bg-purple-900/10';
+  const highlightColor = isAnalysis ? 'text-cyan-500' : 'text-purple-500';
 
   return (
     <>
@@ -574,11 +741,7 @@ function Slides() {
               : 'w-full max-w-7xl aspect-video rounded-xl'
           }`}
         >
-          {/* DECORATIVE HUD LINES */}
-          <div className="absolute top-0 left-8 w-px h-full bg-white/5 pointer-events-none"></div>
-          <div className="absolute top-0 right-8 w-px h-full bg-white/5 pointer-events-none"></div>
-          <div className="absolute top-8 left-0 w-full h-px bg-white/5 pointer-events-none"></div>
-          <div className="absolute bottom-8 left-0 w-full h-px bg-white/5 pointer-events-none"></div>
+          {/* DECORATIVE HUD LINES (CSS) */}
 
           {/* PROGRESS BAR */}
           <div className="h-1 bg-gray-800 w-full shrink-0 relative z-20">
@@ -792,6 +955,25 @@ function Slides() {
                            </table>
                        </div>
                    </div>
+                </div>
+              )}
+
+              {/* --- 8. DIAGRAM SLIDE (NEW) --- */}
+              {currentSlide.type === 'diagram' && (
+                <div className="h-full flex flex-col">
+                  <div className="mb-6 border-b border-white/10 pb-4">
+                     <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                        {currentSlide.title}
+                     </h2>
+                     <p className={`${accentText} font-mono text-sm mt-1 block uppercase`}>{currentSlide.subtitle}</p>
+                  </div>
+                  <div className="flex-1 bg-black/20 rounded-xl border border-white/10 p-6 overflow-hidden">
+                      {/* Using non-null assertion for safety since this type REQUIRES mermaidChart */}
+                      <MermaidRenderer 
+                          chart={currentSlide.mermaidChart!} 
+                          id={currentSlideIndex}
+                      />
+                  </div>
                 </div>
               )}
 
