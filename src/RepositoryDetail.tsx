@@ -156,9 +156,7 @@ function ReadmeViewer({ readmeContent }: { readmeContent: string | undefined }) 
   );
 }
 
-const API_BASE = "/api"
-const backend_url = "http://51.107.0.46"
-
+const API_BASE = 'https://api.githop.rakaoran.dev/api';
 
 const languageColors: Record<string, string> = {
   JavaScript: "#f1e05a", TypeScript: "#3178c6", Python: "#3572A5", Java: "#b07219",
@@ -263,7 +261,7 @@ function RepositoryDetail() {
     setIsLoading(true)
     try {
       const fullName = `${owner}/${name}`
-      const searchResponse = await fetch(`${backend_url}${API_BASE}/repos/search?full_name=${encodeURIComponent(fullName)}`)
+      const searchResponse = await fetch(`${API_BASE}/repos/search?full_name=${encodeURIComponent(fullName)}`)
       
       if (!searchResponse.ok) {
         navigate(-1) 
@@ -273,18 +271,18 @@ function RepositoryDetail() {
       const searchData = await searchResponse.json()
       const sourceTable = searchData.source_table || initialSource || 'tops';
       
-      const response = await fetch(`${backend_url}${API_BASE}/repos/${searchData.id}/details?source=${sourceTable}`)
+      const response = await fetch(`${API_BASE}/repos/${searchData.id}/details?source=${sourceTable}`)
       const detailData = await response.json() 
       
       let contributors: Contributor[] = []
       try {
-        const contributorsResponse = await fetch(`${backend_url}${API_BASE}/repos/${searchData.id}/contributors?source=${sourceTable}`)
+        const contributorsResponse = await fetch(`${API_BASE}/repos/${searchData.id}/contributors?source=${sourceTable}`)
         if (contributorsResponse.ok) contributors = await contributorsResponse.json()
       } catch (error) { console.error(error) }
       
       let commitActivity: CommitActivity[] = []
       try {
-        const activityResponse = await fetch(`${backend_url}${API_BASE}/repos/${searchData.id}/commit-activity?source=${sourceTable}`)
+        const activityResponse = await fetch(`${API_BASE}/repos/${searchData.id}/commit-activity?source=${sourceTable}`)
         if (activityResponse.ok) {
           const activityData = await activityResponse.json()
           commitActivity = activityData.slice(-52).map((week: any) => ({
@@ -296,7 +294,7 @@ function RepositoryDetail() {
 
       let recentCommits: Commit[] = [];
       try {
-        const commitsResponse = await fetch(`${backend_url}${API_BASE}/repos/${searchData.id}/commits?limit=15&source=${sourceTable}`);
+        const commitsResponse = await fetch(`${API_BASE}/repos/${searchData.id}/commits?limit=15&source=${sourceTable}`);
         if (commitsResponse.ok) recentCommits = await commitsResponse.json();
       } catch (error) { console.error(error) }
 
@@ -322,7 +320,7 @@ function RepositoryDetail() {
     
     setIsSummarizing(true);
     try {
-      const res = await fetch(`${backend_url}${API_BASE}/summarize`, {
+      const res = await fetch(`${API_BASE}/summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: repo.readme_snippet })
@@ -338,9 +336,9 @@ function RepositoryDetail() {
 
   const fetchRepoRank = async (repoId: number, sourceTable: string) => {
     try {
-      let endpoint = `${backend_url}${API_BASE}/repos/top?limit=300`;
-      if (sourceTable === 'growings') endpoint = `${backend_url}${API_BASE}/growings-database`;
-      if (sourceTable === 'trendings') endpoint = `${backend_url}${API_BASE}/trendings-database`;
+      let endpoint = `${API_BASE}/repos/top?limit=300`;
+      if (sourceTable === 'growings') endpoint = `${API_BASE}/growings-database`;
+      if (sourceTable === 'trendings') endpoint = `${API_BASE}/trendings-database`;
       
       const response = await fetch(endpoint);
       const data = await response.json();

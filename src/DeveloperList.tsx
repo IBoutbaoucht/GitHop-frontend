@@ -15,7 +15,7 @@ import { PERSONA_DEFINITIONS } from './constants/personas';
 
 // --- CONFIGURATION & TYPES ---
 
-const API_BASE = '/api';
+const API_BASE = 'https://api.githop.rakaoran.dev/api';
 
 interface Developer {
   id: number;

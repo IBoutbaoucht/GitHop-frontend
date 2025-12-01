@@ -109,7 +109,7 @@ const personaConfig: Record<string, { label: string; icon: any; color: string }>
   enterprise_architect: { label: 'Enterprise Architect', icon: Briefcase, color: 'text-blue-300 border-blue-300 bg-blue-300/10' },
 };
 
-const API_BASE = "/api"
+const API_BASE = 'https://api.githop.rakaoran.dev/api';
 
 const formatNumber = (num: number) => {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';

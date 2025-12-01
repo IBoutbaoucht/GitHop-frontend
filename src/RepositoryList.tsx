@@ -44,7 +44,7 @@ interface Repository {
   similarity?: number;
 }
 
-const API_BASE = '/api';
+const API_BASE = 'https://api.githop.rakaoran.dev/api';
 
 const languageColors: Record<string, string> = {
   JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Java: '#b07219',
