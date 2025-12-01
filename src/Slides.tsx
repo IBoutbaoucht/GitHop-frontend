@@ -1,65 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import hljs from 'highlight.js';
-import mermaid from 'mermaid';
 import 'highlight.js/styles/atom-one-dark.css';
 
-// --- MERMAID INITIALIZATION (Applied once globally) ---
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'base',
-  themeVariables: {
-    primaryColor: '#0B0C15', 
-    secondaryColor: '#1f2937', 
-    edgeLabelBackground: '#0B0C15',
-    tertiaryColor: '#58a6ff', // Node Background
-    lineColor: '#c084fc', // Links (Purple/Pink)
-    fontFamily: 'monospace',
-    nodeBorder: '#58a6ff',
-    clusterBkg: '#0B0C15',
-    clusterBorder: '#58a6ff',
-  }
-});
-
-// Define a type for the component's props for clarity
-type MermaidProps = {
-  chart: string;
-  id: number;
-};
-
-// --- HELPER COMPONENT: Renders the Mermaid Diagram (FIXED for TypeScript/Flicker) ---
-const MermaidRenderer = ({ chart, id }: MermaidProps) => {
-  // Explicitly type the ref as an HTMLDivElement
-  const ref = useRef<HTMLDivElement>(null); 
-  const chartId = `mermaid-chart-${id}`;
-
-  useEffect(() => {
-    // Check if ref exists before accessing innerHTML
-    if (ref.current) { 
-      ref.current.innerHTML = ''; // Clear previous content
-
-      // Render the new chart string
-      mermaid.render(chartId, chart)
-        .then(({ svg }) => {
-          if (ref.current) {
-            // Inject the generated SVG
-            ref.current.innerHTML = svg;
-          }
-        })
-        .catch(error => {
-          if (ref.current) {
-             ref.current.innerHTML = `<p style="color: red;">Error rendering chart: ${error.message}</p>`;
-          }
-        });
-    }
-  // Reruns only when chart content or slide index changes
-  }, [chart, id]); 
-
-  // Return the empty container div for React to manage the reference
-  return <div id={chartId} ref={ref} className="mermaid-output w-full h-full flex justify-center items-center text-gray-400">Rendering Data Flow...</div>;
-};
-
 // --- TYPES ---
-type SlideType = 'title' | 'simple' | 'split' | 'list' | 'code' | 'table' | 'grid' | 'diagram';
+type SlideType = 'title' | 'simple' | 'split' | 'list' | 'code' | 'table' | 'grid' | 'image' | 'workflow'; 
 
 interface Quote {
   text: string;
@@ -70,6 +14,14 @@ interface GridItem {
   title: string;
   icon: string; // SVG key
   description: string;
+}
+
+interface WorkflowStep {
+    step: number;
+    title: string;
+    description: string;
+    codeFocus: string;
+    colorKey: 'blue' | 'yellow' | 'purple' | 'green' | 'pink' | 'cyan';
 }
 
 interface SlideData {
@@ -87,98 +39,25 @@ interface SlideData {
   tableHeaders?: string[];
   tableRows?: string[][];
   gridItems?: GridItem[];
+  workflowSteps?: WorkflowStep[]; // New property
   theme?: 'analysis' | 'architecture';
   leftContent?: { title: string; text: string };
   rightContent?: { title: string; text: string };
-  mermaidChart?: string; // New property for diagrams
 }
 
-// --- MERMAID CHART DATA ---
-const interactionDiagram = `
-graph TD
-    User((User))
-    
-    subgraph System [GitHop System]
-        direction LR
-        View[View Social Feed]
-        FetchRepos[Fetch & Rank Repos]
-        FetchDevs[Fetch & Rank Developers]
-        FetchTopics[Fetch & Rank Topics]
-        Render[Render Feed UI]
-        Filter[Filter Feed by Topic]
-        ProcessFilter[Process Filter Request]
-    end
-    
-    External[Go to GitHub]
+// --- WORKFLOW DATA (Updated to 7 Steps) ---
+const dataProcessingWorkflow: WorkflowStep[] = [
+    { step: 1, title: 'Target Identification', description: 'Scouts run queries (by category, age, or topic) to identify new candidate repositories for the pipeline.', codeFocus: 'developerScout.ts', colorKey: 'blue' },
+    { step: 2, title: 'Stub Initialization', description: 'New targets are inserted into the database with minimal metadata (ID, Name) and marked sync_status = "stub".', codeFocus: 'db.ts', colorKey: 'yellow' },
+    { step: 3, title: 'Stub Hydration', description: 'Worker identifies incomplete repos (sync_status = "stub") and begins the detailed enrichment process.', codeFocus: 'this.hydrateStubs()', colorKey: 'purple' },
+    { step: 4, title: 'Deep GraphQL Fetch', description: 'Fetches complex metrics (Languages, Issues, Releases, README) in one optimized query to minimize API calls.', codeFocus: 'fetchAndEnrichRepo (GraphQL)', colorKey: 'green' },
+    { step: 5, title: 'Hybrid Contributor Check', description: 'Attempts fast REST API fetch first. If 403/204 occurs, initiates the GraphQL commit history scan for resilience.', codeFocus: 'updateMissingContributors()', colorKey: 'pink' },
+    { step: 6, title: 'Scoring & Ranking', description: 'Custom algorithms calculate Exploration Score and Growth Velocity based on enriched data, penalizing inactive repos.', codeFocus: 'scoreCalculation.ts', colorKey: 'cyan' },
+    { step: 7, title: 'Final DB Commit', description: 'Updates the entire repo row and sets sync_status = "complete" for low-latency retrieval.', codeFocus: 'DB Update', colorKey: 'blue' },
+];
 
-    User --> View
-    View --> FetchRepos
-    View --> FetchDevs
-    View --> FetchTopics
-    FetchRepos --> Render
-    FetchDevs --> Render
-    FetchTopics --> Render
-    
-    User --> Filter
-    Filter --> ProcessFilter
-    ProcessFilter --> Render
-    
-    User -->|Click Item| External
-`;
 
-const dataFlowDiagram = `
-flowchart LR
-    GH[GitHub API]
-    Raw{Raw Data: Repos, Users}
-    Engine[Processing & Ranking Engine]
-    Agg[Aggregated & Ranked Data]
-    DB[(Database)]
-    Server[Web Server]
-    Client[Web Client]
-
-    %% Backend Flow
-    GH --> Raw
-    Raw --> Engine
-    Engine --> Agg
-    Agg --> DB
-
-    %% User Flow
-    Client -- Request Feed --> Server
-    Server -- Fetch Processed Data --> DB
-    DB -- Return Data --> Server
-    Server -- Render JSON/HTML --> Client
-`;
-
-const backendProcessDiagram = `
-flowchart TD
-    subgraph Worker ["Background Worker (Cron)"]
-        Trigger(Scheduled Trigger)
-        Fetch[Fetch Data from GitHub API]
-        Calc[Calculate Metrics: Explore Score, Growth]
-        Rank[Rank Items per Category]
-        Mix[Aggregate & Mix Rankings]
-        Store[Store in Database]
-    end
-
-    subgraph UserFlow ["User Interaction"]
-        Request[User Requests Page]
-        Retrieve[Retrieve Master Feed List]
-        Render[Render JSON/HTML]
-        Send[Send to User Browser]
-    end
-
-    DB[(Database)]
-
-    %% Connections
-    Trigger --> Fetch --> Calc --> Rank --> Mix --> Store
-    Store --> DB
-    
-    Request --> Retrieve
-    DB --> Retrieve
-    Retrieve --> Render --> Send
-`;
-
-// --- SLIDE DATA ARRAY (28 Slides) ---
+// --- SLIDE DATA ARRAY (25 Slides) ---
 const slides: SlideData[] = [
   // ==========================================
   // PHASE 1: ANALYSIS & REQUIREMENTS (12 Slides)
@@ -325,32 +204,83 @@ const results = await db.vectorQuery(embeddings, intent);`
   },
 
   // ==========================================
-  // PHASE 1.5: INTERACTION DIAGRAMS (3 Slides - Bridge)
+  // PHASE 1.5: INTERACTIVE WORKFLOW (NEW)
   // ==========================================
   {
-    type: 'diagram',
-    title: 'High-Level Interaction Diagram',
-    subtitle: 'SRS Figure 1: User Experience Flow',
-    theme: 'analysis',
-    mermaidChart: interactionDiagram
+    type: 'workflow',
+    title: 'Hybrid Data Ingestion Pipeline',
+    subtitle: '7-Step Sequential Workflow of Background Worker Service',
+    theme: 'architecture',
+    workflowSteps: dataProcessingWorkflow
   },
+
+  // --- NEW CODE ANALYSIS SLIDE (Smart Fetching) ---
   {
-    type: 'diagram',
-    title: 'Data Flow Diagram',
-    subtitle: 'SRS Figure 2: Data Life Cycle',
-    theme: 'analysis',
-    mermaidChart: dataFlowDiagram
+    type: 'code',
+    title: 'Smart Rate Limiting',
+    subtitle: 'Contributor Fetch Fallback Strategy',
+    theme: 'architecture',
+    description: [
+      'Problem: Naive fetching hits API limits (403) or GraphQL list limits (204).',
+      'Solution: Use Strategy Pattern to define a tiered fetching approach.',
+      'Execution: Attempt fast REST (Tier 1). If failure, fallback to slow, expensive GraphQL History Scan (Tier 2).'
+    ],
+    code: `// The "Smart" Fetching Logic
+private async fetchAndSaveContributors(repoGithubId: string, fullName: string): Promise<void> {
+  // STRATEGY 1: Try Standard REST API (Fast, Cheap)
+  const response = await fetch(\`https://api.github.com/repos/\${fullName}/contributors?per_page=30\`);
+
+  if (response.ok) {
+    // ✅ Success - Exit early
+    return await this.saveContributorsToDB(repoGithubId, await response.json(), 'all_time'); 
+  }
+
+  // STRATEGY 2: Fallback Logic (The "Safety Net")
+  if (response.status === 403 || response.status === 204) {
+    console.warn(\`⚠️ REST failed for \${fullName}. Switching to GraphQL History Scan...\`);
+    
+    // Call the heavy-duty GraphQL scraper
+    await this.fetchAndSaveRecentContributorsGraphQL(repoGithubId, fullName);
+  }
+}`
   },
+
+  // --- NEW CODE ANALYSIS SLIDE (Deep Hydration) ---
   {
-    type: 'diagram',
-    title: 'Backend Process Diagram',
-    subtitle: 'SRS Figure 3: Worker vs. User Interaction',
-    theme: 'analysis',
-    mermaidChart: backendProcessDiagram
+    type: 'code',
+    title: 'Deep Metric Enrichment',
+    subtitle: 'Optimized GraphQL Hydration Query',
+    theme: 'architecture',
+    language: 'graphql',
+    description: [
+      'Goal: Gather disparate data points into one database schema in a single request.',
+      'Efficiency: GraphQL is optimized for single-call deep dives, crucial for avoiding API round-trips.',
+      'Data Points: Includes Metadata, Health Metrics, and Content for AI Analysis (README).'
+    ],
+    code: `# The "Hydration" Query (src/services/workerService.ts)
+query RepoHydrate($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    # 1. Basic Metadata
+    name, description, stargazerCount, forkCount
+    
+    # 2. Tech Stack Analysis
+    primaryLanguage { name }
+    languages(first: 10) { edges { size, node { name } } }
+    
+    # 3. Health Metrics
+    issues(states: OPEN) { totalCount }
+    releases(first: 1) { nodes { publishedAt } }
+    
+    # 4. Content for AI Analysis
+    readme: object(expression: "HEAD:README.md") { 
+      ... on Blob { text } 
+    }
+  }
+}`
   },
 
   // ==========================================
-  // PHASE 2: ARCHITECTURE & TESTING (13 Slides - Purple/Pink Theme)
+  // PHASE 2: ARCHITECTURE & TESTING (10 Slides - Purple/Pink Theme)
   // ==========================================
   {
     type: 'simple',
@@ -553,7 +483,8 @@ export class WorkerFacade {
 /* TERMINAL OUTPUT:
  PASS  tests/persona.test.ts
  ✓ classifies AI Whisperer (4ms)
-*/`
+*/`,
+    imageSrc: './white_box_diagram.png'
   },
   {
     type: 'code',
@@ -578,7 +509,8 @@ export class WorkerFacade {
 /* TERMINAL OUTPUT:
  PASS  tests/scoring.test.ts
  ✓ Handles Zero-State Repo (2ms)
-*/`
+*/`,
+    imageSrc: './bva_diagram.png'
   },
   {
     type: 'table',
@@ -633,6 +565,14 @@ function Slides() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState(1); // Workflow state
+
+  useEffect(() => {
+    // Reset active step when navigating away from the workflow slide
+    if (slides[currentSlideIndex].type !== 'workflow') {
+      setActiveStep(1);
+    }
+  }, [currentSlideIndex]);
 
   const currentSlide = slides[currentSlideIndex];
   const currentTheme = currentSlide.theme || 'architecture';
@@ -653,11 +593,29 @@ function Slides() {
   }, [currentSlide]);
 
   const nextSlide = () => {
-    if (currentSlideIndex < slides.length - 1) setCurrentSlideIndex(prev => prev + 1);
+    // Handle sequential steps within the workflow slide
+    if (currentSlide.type === 'workflow' && currentSlide.workflowSteps && activeStep < currentSlide.workflowSteps.length) {
+        setActiveStep(prev => prev + 1);
+        return;
+    }
+
+    if (currentSlideIndex < slides.length - 1) {
+      setCurrentSlideIndex(prev => prev + 1);
+      setActiveStep(1); // Reset step when moving to next slide
+    }
   };
 
   const prevSlide = () => {
-    if (currentSlideIndex > 0) setCurrentSlideIndex(prev => prev - 1);
+    // Handle sequential steps within the workflow slide
+    if (currentSlide.type === 'workflow' && activeStep > 1) {
+        setActiveStep(prev => prev - 1);
+        return;
+    }
+    
+    if (currentSlideIndex > 0) {
+      setCurrentSlideIndex(prev => prev - 1);
+      setActiveStep(1); // Reset step when moving to prev slide
+    }
   };
 
   const toggleFullscreen = () => {
@@ -685,7 +643,7 @@ function Slides() {
       window.removeEventListener('keydown', handleKeydown);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
     };
-  }, [currentSlideIndex]);
+  }, [currentSlideIndex, activeStep]);
 
   // --- THEME COLORS ---
   const isAnalysis = currentTheme === 'analysis';
@@ -696,7 +654,16 @@ function Slides() {
   const accentText = isAnalysis ? 'text-cyan-400' : 'text-purple-400';
   const accentBorder = isAnalysis ? 'border-cyan-500/50' : 'border-purple-500/50';
   const ambientBg = isAnalysis ? 'bg-cyan-900/10' : 'bg-purple-900/10';
-  const highlightColor = isAnalysis ? 'text-cyan-500' : 'text-purple-500';
+  
+  const colorMap = {
+    blue: 'bg-blue-600', yellow: 'bg-yellow-500', purple: 'bg-purple-600',
+    green: 'bg-green-600', pink: 'bg-pink-600', cyan: 'bg-cyan-600'
+  };
+  const colorMapText = {
+    blue: 'text-blue-400', yellow: 'text-yellow-400', purple: 'text-purple-400',
+    green: 'text-green-400', pink: 'text-pink-400', cyan: 'text-cyan-400'
+  };
+
 
   return (
     <>
@@ -958,21 +925,71 @@ function Slides() {
                 </div>
               )}
 
-              {/* --- 8. DIAGRAM SLIDE (NEW) --- */}
-              {currentSlide.type === 'diagram' && (
+              {/* --- 8. IMAGE SLIDE (For Diagrams) --- */}
+              {currentSlide.type === 'image' && (
+                 <div className="h-full flex flex-col">
+                    <div className="mb-6 border-b border-white/10 pb-4">
+                       <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                          {currentSlide.title}
+                       </h2>
+                       {currentSlide.subtitle && <p className={`${accentText} font-mono text-sm mt-1 block uppercase`}>{currentSlide.subtitle}</p>}
+                    </div>
+                    
+                    <div className="flex-1 flex items-center justify-center bg-black/20 rounded-xl border border-white/10 p-6 overflow-hidden">
+                        <img 
+                            // Using the direct path string
+                            src={currentSlide.imageSrc} 
+                            alt={currentSlide.title}
+                            className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-white/5"
+                        />
+                    </div>
+                    {/* Optional Code Description for testing slides */}
+                    {currentSlide.description && (
+                        <div className={`mt-4 p-3 bg-black/20 border-l-2 ${accentBorder} text-sm font-mono text-gray-400`}>
+                            {currentSlide.description[0]}
+                        </div>
+                    )}
+                 </div>
+              )}
+
+              {/* --- 9. WORKFLOW SLIDE (INTERACTIVE) --- */}
+              {currentSlide.type === 'workflow' && (
                 <div className="h-full flex flex-col">
-                  <div className="mb-6 border-b border-white/10 pb-4">
-                     <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                  <div className="mb-10 border-b border-white/10 pb-4">
+                     <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
                         {currentSlide.title}
                      </h2>
-                     <p className={`${accentText} font-mono text-sm mt-1 block uppercase`}>{currentSlide.subtitle}</p>
+                     <p className={`${accentText} font-mono text-sm uppercase`}>{currentSlide.subtitle}</p>
                   </div>
-                  <div className="flex-1 bg-black/20 rounded-xl border border-white/10 p-6 overflow-hidden">
-                      {/* Using non-null assertion for safety since this type REQUIRES mermaidChart */}
-                      <MermaidRenderer 
-                          chart={currentSlide.mermaidChart!} 
-                          id={currentSlideIndex}
-                      />
+
+                  <div className="flex-1 grid grid-cols-7 gap-4 h-full content-start relative">
+                    {/* Visual Connector Line */}
+                    <div className="absolute top-[18%] left-4 right-4 h-0.5 bg-gray-700/50"></div>
+                    
+                    {currentSlide.workflowSteps?.map((step, i) => (
+                      <div key={i} className={`flex flex-col items-center text-center transition-all duration-500 transform ${
+                        i + 1 <= activeStep ? 'opacity-100 scale-100' : 'opacity-30 scale-95'
+                      } ${i + 1 === activeStep ? 'z-10 shadow-[0_0_20px_rgba(150,200,255,0.5)]' : ''}`}>
+                        
+                        {/* Step Circle/Marker */}
+                        <div className={`w-8 h-8 rounded-full border-2 ${colorMap[step.colorKey]} ${i + 1 === activeStep ? 'bg-black/90 scale-125' : 'bg-gray-900/90'} transition-all duration-300 flex items-center justify-center font-bold text-sm text-white relative z-20`}>
+                            {step.step}
+                        </div>
+                        
+                        {/* Content Card */}
+                        <div className={`mt-4 p-3 rounded-lg border ${i + 1 === activeStep ? accentBorder : 'border-white/10'} transition-colors duration-300 h-48 flex flex-col justify-between ${
+                            i + 1 === activeStep ? 'bg-white/5' : 'bg-white/0'
+                        }`}>
+                            <div>
+                                <h3 className={`text-md font-bold ${i + 1 === activeStep ? colorMapText[step.colorKey] : 'text-gray-400'} mb-1`}>{step.title}</h3>
+                                <p className="text-gray-300 text-[11px] leading-snug">{step.description}</p>
+                            </div>
+                            <code className={`block text-[10px] font-mono p-1 rounded ${i + 1 === activeStep ? 'bg-black/20 text-white' : 'text-gray-600'}`}>
+                                {step.codeFocus}
+                            </code>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -989,11 +1006,13 @@ function Slides() {
              
              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1 bg-white/5 rounded px-2 py-1">
-                  <button onClick={prevSlide} disabled={currentSlideIndex === 0} className="hover:text-white disabled:opacity-30 transition">PREV</button>
+                  <button onClick={prevSlide} disabled={currentSlideIndex === 0 && activeStep === 1} className="hover:text-white disabled:opacity-30 transition">PREV</button>
+                  
                   <span className={`mx-2 ${accentText}`}>
-                    {String(currentSlideIndex + 1)} / {String(slides.length)}
+                    {currentSlide.type === 'workflow' ? `${activeStep}/7` : `${String(currentSlideIndex + 1)} / ${String(slides.length)}`}
                   </span>
-                  <button onClick={nextSlide} disabled={currentSlideIndex === slides.length - 1} className="hover:text-white disabled:opacity-30 transition">NEXT</button>
+                  
+                  <button onClick={nextSlide} disabled={currentSlideIndex === slides.length - 1 && currentSlide.type !== 'workflow'} className="hover:text-white disabled:opacity-30 transition">NEXT</button>
                 </div>
                 <button onClick={toggleFullscreen} className={`hover:${accentText} transition`} title="Toggle Fullscreen">
                    [ {isFullscreen ? 'EXIT' : 'FULL'} ]

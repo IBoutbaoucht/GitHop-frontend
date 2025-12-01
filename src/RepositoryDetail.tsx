@@ -45,6 +45,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css'; // Import the code style you want
+import rehypeRaw from "rehype-raw"
 
 
 // CSS for the markdown look and code highlighting
@@ -145,9 +146,12 @@ function ReadmeViewer({ readmeContent }: { readmeContent: string | undefined }) 
   return (
     <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl border border-white/5 p-6 overflow-hidden">
       <div className="markdown-body dark !bg-transparent !text-gray-300">
-        <ReactMarkdown 
-          remarkPlugins={[remarkGfm]} 
-          rehypePlugins={[rehypeHighlight]}
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[
+            rehypeRaw,        // <---- ENABLE HTML RENDERING
+            rehypeHighlight,  // <---- syntax highlighting AFTER html parsing
+          ]}
         >
           {readmeContent}
         </ReactMarkdown>
