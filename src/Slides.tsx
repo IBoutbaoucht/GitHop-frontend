@@ -458,53 +458,13 @@ if (filter.stars) query.where('stars', '>', filter.stars);
 // Finalize
 const sql = query.build();`
   },
-  {
-    type: 'code',
-    title: 'Template Method',
-    language: 'typescript',
-    theme: 'architecture',
-    description: [
-      'Type: Behavioral',
-      'Defines the skeleton of an algorithm.',
-      'Standardizes how we sync Weekly vs Monthly trends.'
-    ],
-    code: `abstract class TrendSync {
-    // The Template (Fixed steps)
-    async sync() {
-        const data = await this.fetchData(); // Abstract
-        await this.save(data); // Concrete
-    }
-}
-
-class WeeklySync extends TrendSync {
-    fetchData() { return ghArchive.getDays(7); }
-}`
-  },
-  {
-    type: 'code',
-    title: 'Facade Pattern',
-    language: 'typescript',
-    theme: 'architecture',
-    description: [
-      'Type: Structural',
-      'Hides complexity behind a simple interface.',
-      'The WorkerService wraps complex background job logic.'
-    ],
-    code: `// Complex Subsystems:
-// - RedisQueue
-// - GitHubAPI
-// - DB Update Logic
-
-// Facade:
-export class WorkerFacade {
-    static async startAll() {
-        // Orchestrates all subsystems effortlessly
-        await queue.clean();
-        await api.hydrate();
-    }
-}`
-  },
   // TESTING SLIDES
+  {
+    type: 'simple',
+    title: 'Testing Code .',
+    content: 'Testing Techniques ',
+    theme: 'architecture'
+  },
   {
     type: 'code',
     title: 'Unit Testing',
@@ -518,7 +478,7 @@ export class WorkerFacade {
     ],
     code: `describe('Persona Engine', () => {
   test('classifies AI Whisperer', () => {
-    const bio = "I love LLMs and GPT";
+    const bio = "AI Research Engineer working on LLMs : Sebastian Raschka @rasbt ";
     const result = calculatePersona(bio);
     
     expect(result.ai_whisperer).toBeGreaterThan(0);
@@ -532,40 +492,15 @@ export class WorkerFacade {
 */`
   },
   {
-    type: 'code',
-    title: 'Boundary Value Analysis',
-    subtitle: 'Edge Case Validation',
-    language: 'typescript',
-    theme: 'architecture',
-    description: [
-        'Method: Boundary Testing',
-        'Target: Scoring Algorithm',
-        'Goal: Handle 0 inputs (New Repo).'
-    ],
-    code: `test('Handles Zero-State Repo', () => {
-    const zeroRepo = { stars: 0, forks: 0 };
-    const score = calculateScore(zeroRepo);
-    
-    // Boundary Check
-    expect(score).toBe(0);
-    expect(Number.isNaN(score)).toBe(false);
-});
-
-/* TERMINAL OUTPUT:
- PASS tests/scoring.test.ts
- ✓ Handles Zero-State Repo (2ms)
-*/`
-  },
-  {
     type: 'table',
     title: 'Test Case Artifacts',
     subtitle: 'Black-Box Testing',
     theme: 'architecture',
     tableHeaders: ['ID', 'Input', 'Expected', 'Actual', 'Status'],
     tableRows: [
-        ['TC-01', '"React Twitter Clone"', 'List of React Repos', '5 Results Found', 'PASS ✅'],
-        ['TC-02', '"" (Empty String)', 'Error 400', 'Error 400', 'PASS ✅'],
-        ['TC-03', '"Cobol Mainframe"', 'Empty List []', 'Empty List []', 'PASS ✅']
+        ['TC-01', '"React Twitter Clone"', 'List of React Repos', '+5 Results Found', 'PASS ✅'],
+        ['TC-02', '"" (Empty String)', 'DO NOTHING', 'DID NOTHING', 'PASS ✅'],
+        ['TC-03', '"Cowboy Mainframe"', 'Empty List []', 'Empty List []', 'PASS ✅']
     ]
   },
 
