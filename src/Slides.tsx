@@ -85,12 +85,6 @@ const slides: SlideData[] = [
     theme: 'analysis'
   },
   {
-    type: 'simple',
-    title: 'What is GitHop?',
-    content: 'A social intelligence engine that transforms scattered GitHub activity into a curated feed of trends and developer insights.',
-    theme: 'analysis'
-  },
-  {
     type: 'split',
     title: 'Project Motivation',
     subtitle: 'Gap Analysis',
@@ -108,10 +102,16 @@ const slides: SlideData[] = [
       title: 'The Solution',
       listItems: [
         'A unified feed for the entire open-source ecosystem.',
+        'Topic-level insights.',
         'AI Vector Search for semantic discovery.',
-        'Topic-level insights.'
       ]
     }
+  },
+    {
+    type: 'simple',
+    title: 'GitHop ',
+    content: 'A social intelligence engine that transforms scattered GitHub activity into a curated feed of trends and developer insights.',
+    theme: 'analysis'
   },
   {
     type: 'grid',
@@ -327,6 +327,28 @@ useEffect(() => {
   };
   fetchFeed();
 }, []);`
+  },
+  {
+    type: 'split',
+    title: 'Hybrid AI Architecture',
+    subtitle: 'Local Embeddings & Cloud Inference',
+    theme: 'architecture',
+    leftContent: {
+      title: 'Local: Vector Engine',
+      listItems: [
+        'Model: Xenova/all-MiniLM-L6-v2',
+        'Type: On-Device / Edge Inference',
+        'Use Case: Powers the "Related Repos" search features instantly.'
+      ]
+    },
+    rightContent: {
+      title: 'Cloud: Semantic Agent',
+      listItems: [
+        'Model: Online LLM API',
+        'Type: Server-Side Inference',
+        'Use Case: Answers the specific question "What does this repo do?" '
+      ]
+    }
   },
   {
     type: 'simple',
