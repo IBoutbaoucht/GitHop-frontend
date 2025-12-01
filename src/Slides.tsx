@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import { BarChart, Filter, Layout, Check, Server, Database, Network, Shield } from 'lucide-react';
+import { 
+  Code2, Terminal, Activity, GitBranch, Database, Server, 
+  Shield, Zap, Layout, Filter, CheckCircle2, List, 
+  ChevronRight, ChevronLeft, Maximize2, Minimize2, 
+  Sparkles, Layers, GitCommit, Search, Share2 
+} from 'lucide-react';
 
 // --- TYPES ---
 type SlideType = 'title' | 'simple' | 'split' | 'list' | 'code' | 'table' | 'grid' | 'image' | 'workflow';
@@ -13,7 +18,7 @@ interface Quote {
 
 interface GridItem {
   title: string;
-  icon: string; // SVG key
+  icon: string; // Lucide icon key
   description: string;
 }
 
@@ -40,38 +45,37 @@ interface SlideData {
   tableHeaders?: string[];
   tableRows?: string[][];
   gridItems?: GridItem[];
-  workflowSteps?: WorkflowStep[]; // New property
+  workflowSteps?: WorkflowStep[];
   theme?: 'analysis' | 'architecture';
+  link?: string; // <--- ADD THIS LINE
   leftContent?: { title: string; text: string };
   rightContent?: { title: string; text: string };
 }
 
 // --- WORKFLOW DATA ---
 const dataProcessingWorkflow: WorkflowStep[] = [
-    { step: 1, title: 'Target Identification', description: 'Scouts run queries (by category, age, or topic) to identify new candidate repositories for the pipeline.', codeFocus: 'developerScout.ts', colorKey: 'blue' },
-    { step: 2, title: 'Stub Initialization', description: 'New targets are inserted into the database with minimal metadata (ID, Name) and marked sync_status = "stub".', codeFocus: 'db.ts', colorKey: 'yellow' },
-    { step: 3, title: 'Stub Hydration', description: 'Worker identifies incomplete repos (sync_status = "stub") and begins the detailed enrichment process.', codeFocus: 'this.hydrateStubs()', colorKey: 'purple' },
-    { step: 4, title: 'Deep GraphQL Fetch', description: 'Fetches complex metrics (Languages, Issues, Releases, README) in one optimized query to minimize API calls.', codeFocus: 'fetchAndEnrichRepo (GraphQL)', colorKey: 'green' },
-    { step: 5, title: 'Hybrid Contributor Check', description: 'Attempts fast REST API fetch first. If 403/204 occurs, initiates the GraphQL commit history scan for resilience.', codeFocus: 'updateMissingContributors()', colorKey: 'pink' },
-    { step: 6, title: 'Scoring & Ranking', description: 'Custom algorithms calculate Exploration Score and Growth Velocity based on enriched data, penalizing inactive repos.', codeFocus: 'scoreCalculation.ts', colorKey: 'cyan' },
-    { step: 7, title: 'Final DB Commit', description: 'Updates the entire repo row and sets sync_status = "complete" for low-latency retrieval.', codeFocus: 'db.ts', colorKey: 'blue' },
+    { step: 1, title: 'Target Identification', description: 'Scouts run queries to identify new candidate repositories.', codeFocus: 'developerScout.ts', colorKey: 'blue' },
+    { step: 2, title: 'Stub Initialization', description: 'Targets inserted with minimal metadata (ID, Name).', codeFocus: 'db.ts', colorKey: 'yellow' },
+    { step: 3, title: 'Stub Hydration', description: 'Worker identifies incomplete repos for enrichment.', codeFocus: 'this.hydrateStubs()', colorKey: 'purple' },
+    { step: 4, title: 'Deep GraphQL Fetch', description: 'Fetches complex metrics in one optimized query.', codeFocus: 'fetchAndEnrichRepo', colorKey: 'green' },
+    { step: 5, title: 'Hybrid Contributor Check', description: 'Fast REST fetch first, fallback to GraphQL scan.', codeFocus: 'updateMissingContributors()', colorKey: 'pink' },
+    { step: 6, title: 'Scoring & Ranking', description: 'Algorithms calculate Exploration Score & Velocity.', codeFocus: 'scoreCalculation.ts', colorKey: 'cyan' },
+    { step: 7, title: 'Final DB Commit', description: 'Updates row, sets sync_status = "complete".', codeFocus: 'db.ts', colorKey: 'blue' },
 ];
 
 const historicalVelocityWorkflow: WorkflowStep[] = [
-    { step: 1, title: 'Trigger & Timeframe', description: 'Admin endpoint (/sync/gharchive/weekly) is called, defining the Growth Delta timeframe (e.g., 7 days).', codeFocus: 'newService.ts', colorKey: 'blue' },
-    { step: 2, title: 'BigQuery Scan', description: 'A SQL query is executed against the massive GH Archive public dataset.', codeFocus: 'GH Archive SQL', colorKey: 'yellow' },
-    { step: 3, title: 'Growth Delta Extraction', description: 'The query returns Growth Delta (new star counts), stored temporarily in a Map<FullName, Count> in memory.', codeFocus: 'Map<FullName, Delta>', colorKey: 'purple' },
-    { step: 4, title: 'Repo Lookup', description: 'The list of repository names is validated against our database to find internal IDs.', codeFocus: 'db.findReposByNames', colorKey: 'green' },
-    { step: 5, title: 'Hydration Reuse', description: 'The standard GraphQL Hydration logic is reused to fetch current repo metadata for necessary context.', codeFocus: 'GraphQL reuse', colorKey: 'pink' },
-    { step: 6, title: 'Storage Commit', description: 'The historical growth metric is saved into dedicated columns: stars_growth_7d, stars_growth_30d, etc.', codeFocus: 'repository_stats', colorKey: 'cyan' },
+    { step: 1, title: 'Trigger & Timeframe', description: 'Admin endpoint defines Growth Delta timeframe.', codeFocus: 'newService.ts', colorKey: 'blue' },
+    { step: 2, title: 'BigQuery Scan', description: 'SQL query executed against GH Archive dataset.', codeFocus: 'GH Archive SQL', colorKey: 'yellow' },
+    { step: 3, title: 'Growth Delta Extraction', description: 'Returns Growth Delta (new stars) in memory.', codeFocus: 'Map<FullName, Delta>', colorKey: 'purple' },
+    { step: 4, title: 'Repo Lookup', description: 'Validates names against database to find IDs.', codeFocus: 'db.findReposByNames', colorKey: 'green' },
+    { step: 5, title: 'Hydration Reuse', description: 'Standard GraphQL logic re-used for context.', codeFocus: 'GraphQL reuse', colorKey: 'pink' },
+    { step: 6, title: 'Storage Commit', description: 'Saves historical growth metrics (7d, 30d).', codeFocus: 'repository_stats', colorKey: 'cyan' },
 ];
 
-
-// --- SLIDE DATA ARRAY (28 Slides) ---
+// --- SLIDE DATA ARRAY ---
 const slides: SlideData[] = [
-  // ==========================================
-  // PHASE 1: ANALYSIS & REQUIREMENTS (12 Slides)
-  // ==========================================
+  // ... (Your original slide data here - unchanged for brevity, reusing the structure)
+  // PHASE 1: ANALYSIS & REQUIREMENTS
   {
     type: 'title',
     title: 'GitHop',
@@ -93,11 +97,11 @@ const slides: SlideData[] = [
     theme: 'analysis',
     leftContent: {
       title: 'The Problem',
-      text: 'Developers suffer from information overload. GitHub Trending is superficial, lacking semantic filtering. Identifying active peers or finding specific stacks requires manual, time-consuming excavation.'
+      text: 'Developers suffer from information overload. GitHub Trending is superficial, lacking semantic filtering. Identifying active peers or finding specific stacks requires manual excavation.'
     },
     rightContent: {
       title: 'The Solution',
-      text: 'A unified "Social Feed" for code. We implemented a system that aggregates Repositories, Developers, and Topics, powered by Vector Search (AI) and automated background workers to curate quality over quantity.'
+      text: 'A unified "Social Feed" for code. We implemented a system that aggregates Repositories, Developers, and Topics, powered by Vector Search (AI) and automated background workers.'
     }
   },
   {
@@ -160,11 +164,11 @@ const slides: SlideData[] = [
     ],
     code: `// searchAgentService.ts
 // User: "Find me a React starter kit for AI"
- 
+
 // 1. AI Parsing (Gemini Flash)
 const intent = await gemini.parse(query);
 // Result: { language: 'React', topic: 'AI' }
- 
+
 // 2. Vector Search (pgvector)
 const embeddings = await embed(query);
 const results = await db.vectorQuery(embeddings, intent);`
@@ -212,10 +216,8 @@ const results = await db.vectorQuery(embeddings, intent);`
     content: '100% of Critical Requirements Met. Proceeding to Technical Deep Dive.',
     theme: 'analysis'
   },
- 
-  // ==========================================
-  // PHASE 1.5: WORKFLOW PIPELINES (3 Slides - Processing)
-  // ==========================================
+  
+  // PHASE 1.5: WORKFLOW PIPELINES
   {
     type: 'workflow',
     title: 'Hybrid Data Ingestion Pipeline',
@@ -230,8 +232,8 @@ const results = await db.vectorQuery(embeddings, intent);`
     theme: 'architecture',
     workflowSteps: historicalVelocityWorkflow
   },
- 
-  // SLIDE 15: SMART RATE LIMITING (RE-INSERTED)
+
+  // PHASE 2: ARCHITECTURE & DESIGN
   {
     type: 'code',
     title: 'Smart Rate Limiting',
@@ -246,23 +248,21 @@ const results = await db.vectorQuery(embeddings, intent);`
 private async fetchAndSaveContributors(repoGithubId: string, fullName: string): Promise<void> {
   // STRATEGY 1: Try Standard REST API (Fast, Cheap)
   const response = await fetch(\`https://api.github.com/repos/\${fullName}/contributors?per_page=30\`);
- 
+
   if (response.ok) {
     // ✅ Success - Exit early
     return await this.saveContributorsToDB(repoGithubId, await response.json(), 'all_time');
   }
- 
+
   // STRATEGY 2: Fallback Logic (The "Safety Net")
   if (response.status === 403 || response.status === 204) {
     console.warn(\`⚠️ REST failed for \${fullName}. Switching to GraphQL History Scan...\`);
-   
+    
     // Call the heavy-duty GraphQL scraper
     await this.fetchAndSaveRecentContributorsGraphQL(repoGithubId, fullName);
   }
 }`
   },
- 
-  // SLIDE 16: DEEP METRIC ENRICHMENT (RE-INSERTED)
   {
     type: 'code',
     title: 'Deep Metric Enrichment',
@@ -279,15 +279,15 @@ query RepoHydrate($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     # 1. Basic Metadata
     name, description, stargazerCount, forkCount
-   
+    
     # 2. Tech Stack Analysis
     primaryLanguage { name }
     languages(first: 10) { edges { size, node { name } } }
-   
+    
     # 3. Health Metrics
     issues(states: OPEN) { totalCount }
     releases(first: 1) { nodes { publishedAt } }
-   
+    
     # 4. Content for AI Analysis
     readme: object(expression: "HEAD:README.md") {
       ... on Blob { text }
@@ -295,8 +295,6 @@ query RepoHydrate($owner: String!, $name: String!) {
   }
 }`
   },
- 
-  // SLIDE 17: LOW LATENCY RETRIEVAL (Was 15)
   {
     type: 'code',
     title: 'Low-Latency Frontend Retrieval',
@@ -313,7 +311,7 @@ useEffect(() => {
   const fetchFeed = async () => {
     // Single, direct query to our optimized PostgreSQL database
     const response = await fetch('/api/feed/latest?sort=score&limit=20');
-   
+    
     // Data is ready to render instantly (No further calculation needed)
     const feed = await response.json();
     setRepos(feed);
@@ -321,15 +319,13 @@ useEffect(() => {
   fetchFeed();
 }, []);`
   },
- 
-  // SLIDE 18: TECHNICAL ARCHITECTURE INTRO (Was 16)
   {
     type: 'simple',
     title: 'Technical Architecture',
     content: 'Exploring the Design Patterns and Testing Strategy behind the requirements.',
     theme: 'architecture'
   },
-  // DESIGN PATTERNS (8 SLIDES)
+  // DESIGN PATTERNS
   {
     type: 'code',
     title: 'Singleton Pattern',
@@ -342,12 +338,12 @@ useEffect(() => {
     ],
     code: `// src/db.ts
 import { Pool } from 'pg';
- 
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20 // Limit connections
 });
- 
+
 // The single instance export
 export default pool;`
   },
@@ -384,7 +380,7 @@ public async runJobs(strategy: 'FULL' | 'QUICK') {
     ],
     code: `// BigQuery returns: { star_count: 500 }
 // App expects: { stargazers_count: 500 }
- 
+
 const adapter = (bqRow: any): Repo => ({
     name: bqRow.repo_name,
     // The adaptation layer
@@ -408,7 +404,7 @@ pool.on('connect', (client) => {
   // Observer 1: Logger
   console.log("✅ Client Connected");
 });
- 
+
 pool.on('error', (err) => {
   // Observer 2: Error Tracker
   console.error("❌ Unexpected Error", err);
@@ -445,11 +441,11 @@ pool.on('error', (err) => {
     ],
     code: `// Start with base
 let query = new QueryBuilder('repos');
- 
+
 // Step-by-step construction
 if (filter.lang) query.where('language', filter.lang);
 if (filter.stars) query.where('stars', '>', filter.stars);
- 
+
 // Finalize
 const sql = query.build();`
   },
@@ -470,7 +466,7 @@ const sql = query.build();`
         await this.save(data); // Concrete
     }
 }
- 
+
 class WeeklySync extends TrendSync {
     fetchData() { return ghArchive.getDays(7); }
 }`
@@ -489,7 +485,7 @@ class WeeklySync extends TrendSync {
 // - RedisQueue
 // - GitHubAPI
 // - DB Update Logic
- 
+
 // Facade:
 export class WorkerFacade {
     static async startAll() {
@@ -499,7 +495,7 @@ export class WorkerFacade {
     }
 }`
   },
-  // TESTING SLIDES (3 SLIDES)
+  // TESTING SLIDES
   {
     type: 'code',
     title: 'Unit Testing',
@@ -515,17 +511,16 @@ export class WorkerFacade {
   test('classifies AI Whisperer', () => {
     const bio = "I love LLMs and GPT";
     const result = calculatePersona(bio);
-   
+    
     expect(result.ai_whisperer).toBeGreaterThan(0);
     expect(result.frontend_wizard).toBe(0);
   });
 });
- 
+
 /* TERMINAL OUTPUT:
  PASS tests/persona.test.ts
  ✓ classifies AI Whisperer (4ms)
-*/`,
-    imageSrc: './white_box_diagram.png'
+*/`
   },
   {
     type: 'code',
@@ -541,17 +536,16 @@ export class WorkerFacade {
     code: `test('Handles Zero-State Repo', () => {
     const zeroRepo = { stars: 0, forks: 0 };
     const score = calculateScore(zeroRepo);
-   
+    
     // Boundary Check
     expect(score).toBe(0);
     expect(Number.isNaN(score)).toBe(false);
 });
- 
+
 /* TERMINAL OUTPUT:
  PASS tests/scoring.test.ts
  ✓ Handles Zero-State Repo (2ms)
-*/`,
-    imageSrc: './bva_diagram.png'
+*/`
   },
   {
     type: 'table',
@@ -565,24 +559,34 @@ export class WorkerFacade {
         ['TC-03', '"Cobol Mainframe"', 'Empty List []', 'Empty List []', 'PASS ✅']
     ]
   },
-  // SUMMARY
+
+  // MODIFIED CLOSING SEQUENCE
   {
     type: 'simple',
-    title: 'Conclusion',
-    content: 'GitHop is fully implemented, tested, and ready for deployment.',
+    title: 'Mission Status',
+    content: 'All systems are nominal. CI/CD pipelines are green. The architecture has passed all validation checks.',
+    theme: 'architecture'
+  },
+  {
+    type: 'title', // Reusing the title layout for the big reveal
+    title: '🚀 Live Deployment',
+    subtitle: 'It is available now.',
+    link: 'https://githop-frontend.pages.dev', // The Link
+    content: 'Navigate to the live application on your device.',
+    developers: ['Live Demo', 'Production Env'], // Using this prop for badges
     theme: 'architecture'
   }
 ];
 
-// --- ICONS (SVG MAPPING) ---
+// --- ICONS (LUCIDE MAPPING) ---
 const Icons: Record<string, React.ReactNode> = {
-  chart: <BarChart className="w-8 h-8" />,
+  chart: <Activity className="w-8 h-8" />,
   filter: <Filter className="w-8 h-8" />,
   layout: <Layout className="w-8 h-8" />,
-  check: <Check className="w-8 h-8" />,
+  check: <CheckCircle2 className="w-8 h-8" />,
   server: <Server className="w-8 h-8" />,
   database: <Database className="w-8 h-8" />,
-  network: <Network className="w-8 h-8" />,
+  network: <Share2 className="w-8 h-8" />,
   shield: <Shield className="w-8 h-8" />
 };
 
@@ -590,20 +594,28 @@ function Slides() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeStep, setActiveStep] = useState(1); // Workflow state
- 
+  const [activeStep, setActiveStep] = useState(1);
+
   useEffect(() => {
-    // Reset active step when navigating away from the workflow slide
     if (slides[currentSlideIndex].type !== 'workflow') {
       setActiveStep(1);
     }
   }, [currentSlideIndex]);
- 
+
   const currentSlide = slides[currentSlideIndex];
+  // Determine gradient based on theme, using App colors
+  const isAnalysis = currentSlide.theme === 'analysis';
+  // RepositoryList uses purple-600 to pink-600 mostly
+  const accentGradient = isAnalysis
+    ? 'from-blue-500 to-green-400'
+    : 'from-purple-600 to-pink-600';
+    
+  const accentText = isAnalysis ? 'text-blue-400' : 'text-purple-400';
+  const accentBorder = isAnalysis ? 'border-blue-500/30' : 'border-purple-500/30';
+  const accentBg = isAnalysis ? 'bg-blue-500/10' : 'bg-purple-500/10';
+
   const progressPercentage = ((currentSlideIndex + 1) / slides.length) * 100;
- 
-  // --- LOGIC ---
- 
+
   const highlightedCode = useMemo(() => {
     if (currentSlide.type !== 'code' || !currentSlide.code) return '';
     if (currentSlide.language) {
@@ -615,33 +627,29 @@ function Slides() {
     }
     return hljs.highlightAuto(currentSlide.code).value;
   }, [currentSlide]);
- 
+
   const nextSlide = () => {
-    // Handle sequential steps within the workflow slide
     if (currentSlide.type === 'workflow' && currentSlide.workflowSteps && activeStep < currentSlide.workflowSteps.length) {
         setActiveStep(prev => prev + 1);
         return;
     }
- 
     if (currentSlideIndex < slides.length - 1) {
       setCurrentSlideIndex(prev => prev + 1);
-      setActiveStep(1); // Reset step when moving to next slide
+      setActiveStep(1);
     }
   };
- 
+
   const prevSlide = () => {
-    // Handle sequential steps within the workflow slide
     if (currentSlide.type === 'workflow' && activeStep > 1) {
         setActiveStep(prev => prev - 1);
         return;
     }
-   
     if (currentSlideIndex > 0) {
       setCurrentSlideIndex(prev => prev - 1);
-      setActiveStep(1); // Reset step when moving to prev slide
+      setActiveStep(1);
     }
   };
- 
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen().catch(err => {
@@ -651,7 +659,7 @@ function Slides() {
       document.exitFullscreen();
     }
   };
- 
+
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
@@ -668,152 +676,158 @@ function Slides() {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
     };
   }, [currentSlideIndex, activeStep]);
- 
-  // --- THEME COLORS ---
-  const accentGradient = 'from-purple-400 via-pink-500 to-purple-400';
-  const accentText = 'text-purple-400';
-  const accentBorder = 'border-purple-500/50';
- 
- 
-  const colorMap = {
-    blue: 'bg-blue-600', yellow: 'bg-yellow-500', purple: 'bg-purple-600',
-    green: 'bg-green-600', pink: 'bg-pink-600', cyan: 'bg-cyan-600'
-  };
-  const colorMapText = {
-    blue: 'text-blue-400', yellow: 'text-yellow-400', purple: 'text-purple-400',
-    green: 'text-green-400', pink: 'text-pink-400', cyan: 'text-cyan-400'
-  };
- 
- 
+
   return (
     <>
       <style>{`
         .slide-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .slide-scroll::-webkit-scrollbar-track { background: #0B0C15; }
+        .slide-scroll::-webkit-scrollbar-track { background: transparent; }
         .slide-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-       
-        .hljs { background: transparent !important; }
- 
-        .bg-grid-pattern {
-            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
- 
-        .glass-panel {
-           background: rgba(13, 14, 23, 0.85);
-           backdrop-filter: blur(24px);
-           -webkit-backdrop-filter: blur(24px);
-           border: 1px solid rgba(255, 255, 255, 0.05);
-           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
- 
+        .hljs { background: transparent !important; color: #abb2bf; }
+        .hljs-keyword, .hljs-operator { color: #c678dd; } /* Purple */
+        .hljs-title, .hljs-function { color: #61afef; } /* Blue */
+        .hljs-string { color: #98c379; } /* Green */
+        .hljs-comment { color: #5c6370; font-style: italic; }
+        
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .animate-enter { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-enter { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
- 
-      <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0B0C15] p-4 font-sans text-gray-300 relative overflow-hidden bg-grid-pattern">
-       
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] opacity-50 pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] opacity-50 pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]"></div>
- 
+
+      {/* --- APP SHELL BACKGROUND (Matched to RepositoryList) --- */}
+      <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0B0C15] p-4 font-sans text-white relative overflow-hidden">
+        
+        {/* Ambient Blobs */}
+        <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[120px] opacity-40 pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] opacity-40 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+
+        {/* --- MAIN SLIDE CONTAINER (Glassmorphism Card Style) --- */}
         <div
           ref={containerRef}
-          className={`flex flex-col glass-panel transition-all duration-500 overflow-hidden relative ${
+          className={`flex flex-col bg-[#13141F]/80 backdrop-blur-xl border border-white/5 shadow-2xl transition-all duration-500 overflow-hidden relative ${
             isFullscreen
               ? 'w-full h-full rounded-none border-0'
-              : 'w-full max-w-7xl aspect-video rounded-xl'
+              : 'w-full max-w-7xl aspect-video rounded-2xl'
           }`}
         >
-          {/* DECORATIVE HUD LINES (CSS) */}
- 
-          {/* PROGRESS BAR */}
-          <div className="h-1 bg-gray-800 w-full shrink-0 relative z-20">
+          {/* HEADER / PROGRESS BAR */}
+          <div className="h-1.5 w-full bg-[#0B0C15] shrink-0 relative">
             <div
-              className={`h-full bg-gradient-to-r ${accentGradient} shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-300 ease-out`}
+              className={`h-full bg-gradient-to-r ${accentGradient} shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300 ease-out`}
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
- 
-          <div className="flex-1 p-12 md:p-16 flex flex-col relative z-10 overflow-hidden">
+
+          <div className="flex-1 p-8 md:p-12 lg:p-16 flex flex-col relative z-10 overflow-hidden">
             <div key={currentSlideIndex} className="h-full flex flex-col w-full animate-enter">
-             
+              
               {/* --- 1. TITLE SLIDE --- */}
+{/* --- 1. TITLE / LAUNCH SLIDE --- */}
               {currentSlide.type === 'title' && (
                 <div className="h-full flex flex-col justify-center items-center text-center relative">
-                  <div className="mb-6 px-4 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur uppercase tracking-widest text-xs font-mono text-gray-400">
-                    System Initialization
-                  </div>
- 
-                  <h1 className={`font-black tracking-tighter mb-4 bg-gradient-to-r ${accentGradient} bg-clip-text text-transparent bg-[length:200%_auto] ${
-                    isFullscreen ? 'text-9xl' : 'text-8xl'
+                   <div className={`mb-8 w-20 h-20 bg-gradient-to-br ${currentSlide.link ? 'from-green-500 to-emerald-600' : 'from-purple-600 to-pink-600'} rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-white/10 ${currentSlide.link ? 'shadow-green-500/20 animate-pulse' : 'shadow-purple-500/20'}`}>
+                      {currentSlide.link ? <Zap className="w-10 h-10 text-white" /> : <Code2 className="w-10 h-10 text-white" />}
+                   </div>
+
+                  <h1 className={`font-black tracking-tight mb-4 text-white drop-shadow-sm ${
+                    isFullscreen ? 'text-8xl' : 'text-7xl'
                   }`}>
                     {currentSlide.title}
                   </h1>
- 
-                  <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8"></div>
- 
-                  <h2 className={`text-gray-100 mb-2 font-medium tracking-widest uppercase ${
-                    isFullscreen ? 'text-3xl' : 'text-2xl'
-                  }`}>
-                    {currentSlide.subtitle}
-                  </h2>
-                  <p className="text-gray-500 font-mono mb-12">{currentSlide.content}</p>
- 
+
+                  {/* LINK RENDERING LOGIC */}
+                  {currentSlide.link ? (
+                    <a 
+                      href={currentSlide.link} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className={`group relative inline-flex items-center gap-3 px-8 py-4 mb-8 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 hover:scale-105 transition-all duration-300 cursor-pointer`}
+                    >
+                      <span className={`text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 font-bold tracking-wide ${isFullscreen ? 'text-4xl' : 'text-3xl'}`}>
+                        {currentSlide.link.replace('https://', '')}
+                      </span>
+                      <Share2 className="w-8 h-8 text-emerald-400 group-hover:rotate-45 transition-transform" />
+                      
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 rounded-full ring-2 ring-green-500/20 group-hover:ring-green-500/50 animate-pulse"></div>
+                    </a>
+                  ) : (
+                    <h2 className={`text-transparent bg-clip-text bg-gradient-to-r ${accentGradient} mb-8 font-bold tracking-wide ${
+                      isFullscreen ? 'text-4xl' : 'text-3xl'
+                    }`}>
+                      {currentSlide.subtitle}
+                    </h2>
+                  )}
+                  
+                  <p className="text-gray-500 font-medium mb-12 text-lg">{currentSlide.content}</p>
+
                   <div className="flex gap-8 mt-4">
                     {currentSlide.developers?.map(dev => (
                       <div key={dev} className="flex flex-col items-center group">
-                        <span className={`text-sm font-bold tracking-widest ${accentText} group-hover:text-white transition-colors`}>{dev}</span>
-                        <span className="text-[10px] text-gray-600 uppercase">Engineer</span>
+                        <span className="text-sm font-bold tracking-wider text-gray-300 group-hover:text-white transition-colors uppercase">{dev}</span>
+                        <span className={`text-[10px] ${currentSlide.link ? 'text-green-400' : accentText} uppercase font-bold`}>
+                          {currentSlide.link ? 'Status: Active' : 'Engineer'}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
- 
-              {/* --- 2. SIMPLE SLIDE (DEFINITION/CONCLUSION) --- */}
+
+              {/* --- 2. SIMPLE SLIDE --- */}
               {currentSlide.type === 'simple' && (
                  <div className="h-full flex flex-col justify-center items-center text-center px-12 relative">
-                    <h2 className={`font-bold mb-12 text-white ${isFullscreen ? 'text-7xl' : 'text-6xl'}`}>
+                    <div className="w-24 h-24 bg-gray-800/30 rounded-full flex items-center justify-center mb-8 ring-1 ring-white/5">
+                         <Sparkles className="w-10 h-10 text-gray-500" />
+                    </div>
+                    <h2 className={`font-bold mb-8 text-white tracking-tight ${isFullscreen ? 'text-6xl' : 'text-5xl'}`}>
                        {currentSlide.title}
                     </h2>
                     {currentSlide.content && (
-                      <p className={`text-gray-300 max-w-5xl font-light leading-relaxed ${isFullscreen ? 'text-4xl' : 'text-3xl'}`}>
-                         {currentSlide.content}
+                      <p className={`text-gray-400 max-w-4xl font-normal leading-relaxed ${isFullscreen ? 'text-3xl' : 'text-2xl'}`}>
+                          {currentSlide.content}
                       </p>
                     )}
                  </div>
               )}
- 
-              {/* --- 3. SPLIT SLIDE (PROBLEM/SOLUTION) --- */}
+
+              {/* --- 3. SPLIT SLIDE --- */}
               {currentSlide.type === 'split' && (
                 <div className="h-full flex flex-col">
-                  <div className="mb-12 border-b border-white/10 pb-4">
-                     <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                  <div className="mb-8 border-b border-white/5 pb-4 flex items-end justify-between">
+                     <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
                         {currentSlide.title}
                      </h2>
-                     <p className={`${accentText} font-mono text-sm uppercase tracking-widest`}>// {currentSlide.subtitle}</p>
+                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                        <GitBranch className={`w-4 h-4 ${accentText}`} />
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{currentSlide.subtitle}</span>
+                     </div>
                   </div>
- 
-                  <div className="flex-1 grid grid-cols-2 gap-12 items-center">
+
+                  <div className="flex-1 grid grid-cols-2 gap-8 items-center">
                       {/* Left: Problem */}
-                      <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl h-full flex flex-col relative group hover:border-red-500/40 transition-colors">
-                          <h3 className="text-2xl font-bold text-red-400 mb-6 uppercase tracking-wider flex items-center gap-2">
-                             <div className="w-2 h-2 bg-red-500 rounded-full"></div> {currentSlide.leftContent?.title}
+                      <div className="bg-[#0f1016] border border-red-500/10 p-8 rounded-2xl h-full flex flex-col relative group hover:border-red-500/30 transition-colors">
+                          <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mb-6">
+                            <Activity className="w-6 h-6 text-red-400" />
+                          </div>
+                          <h3 className="text-xl font-bold text-red-400 mb-4 uppercase tracking-wider">
+                             {currentSlide.leftContent?.title}
                           </h3>
-                          <p className="text-gray-300 text-lg leading-relaxed flex-1">
+                          <p className="text-gray-400 text-lg leading-relaxed flex-1">
                               {currentSlide.leftContent?.text}
                           </p>
                       </div>
- 
+
                       {/* Right: Solution */}
-                      <div className={`bg-[#13141F]/80 backdrop-blur-sm border ${accentBorder} p-6 rounded-2xl h-full flex flex-col relative group hover:border-opacity-50 transition-colors`}>
-                          <h3 className={`text-2xl font-bold mb-6 uppercase tracking-wider flex items-center gap-2 ${accentText}`}>
-                             <div className={`w-2 h-2 rounded-full bg-purple-500`}></div> {currentSlide.rightContent?.title}
+                      <div className={`bg-[#0f1016] border ${accentBorder} p-8 rounded-2xl h-full flex flex-col relative group`}>
+                          <div className={`w-12 h-12 ${accentBg} rounded-xl flex items-center justify-center mb-6`}>
+                            <CheckCircle2 className={`w-6 h-6 ${accentText}`} />
+                          </div>
+                          <h3 className={`text-xl font-bold mb-4 uppercase tracking-wider ${accentText}`}>
+                             {currentSlide.rightContent?.title}
                           </h3>
                           <p className="text-gray-300 text-lg leading-relaxed flex-1">
                               {currentSlide.rightContent?.text}
@@ -822,113 +836,124 @@ function Slides() {
                   </div>
                 </div>
               )}
- 
-              {/* --- 4. GRID SLIDE (MARKET/FEASIBILITY) --- */}
+
+              {/* --- 4. GRID SLIDE --- */}
               {currentSlide.type === 'grid' && (
                 <div className="h-full flex flex-col">
-                  <div className="mb-10 border-b border-white/10 pb-4">
+                  <div className="mb-10 border-b border-white/5 pb-4">
                      <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
                         {currentSlide.title}
                      </h2>
-                     <p className={`${accentText} font-mono text-sm uppercase`}>{currentSlide.subtitle}</p>
+                     <p className={`${accentText} font-bold text-sm uppercase tracking-wider`}>{currentSlide.subtitle}</p>
                   </div>
- 
+
                   <div className="grid grid-cols-2 gap-6 h-full content-start">
                      {currentSlide.gridItems?.map((item, i) => (
-                        <div key={i} className={`group bg-[#13141F]/80 backdrop-blur-sm p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 hover:bg-[#1A1B26] transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/5 flex items-start gap-6`}>
-                           <div className={`p-4 rounded-md bg-white/5 text-white group-hover:scale-110 transition-transform duration-300 ${accentText}`}>
+                        <div key={i} className={`bg-[#0f1016] p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all duration-300 flex items-start gap-5 group hover:bg-[#151620]`}>
+                           <div className={`p-3 rounded-xl bg-white/5 group-hover:scale-110 transition-transform duration-300 text-gray-300 group-hover:${accentText}`}>
                               {Icons[item.icon]}
                            </div>
                            <div>
-                              <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">{item.title}</h3>
-                              <p className="text-gray-400 leading-relaxed text-sm whitespace-pre-line">{item.description}</p>
+                              <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                              <p className="text-gray-400 leading-relaxed text-sm">{item.description}</p>
                            </div>
                         </div>
                      ))}
                   </div>
                 </div>
               )}
- 
+
               {/* --- 5. LIST SLIDE --- */}
               {currentSlide.type === 'list' && (
                 <div className="h-full flex flex-col">
-                  <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-6xl' : 'text-5xl'}`}>
-                    {currentSlide.title}
-                  </h2>
-                  <p className={`${accentText} mb-8 font-mono`}>{currentSlide.subtitle}</p>
-                 
-                  <ul className={`space-y-6 text-gray-300 flex-1 overflow-y-auto slide-scroll pr-4 ${isFullscreen ? 'text-3xl' : 'text-xl'}`}>
+                  <div className="flex items-center gap-4 mb-8">
+                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                        <List className="w-8 h-8 text-gray-400" />
+                     </div>
+                     <div>
+                        <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                           {currentSlide.title}
+                        </h2>
+                        <p className={`${accentText} font-bold text-sm uppercase tracking-wide`}>{currentSlide.subtitle}</p>
+                     </div>
+                  </div>
+                  
+                  <ul className={`space-y-4 text-gray-300 flex-1 overflow-y-auto slide-scroll pr-2 ${isFullscreen ? 'text-2xl' : 'text-xl'}`}>
                     {currentSlide.items?.map((item, idx) => (
-                      <li key={idx} className="flex items-start p-4 bg-[#13141F]/50 rounded-xl border border-transparent hover:border-white/10 transition-all">
-                         <span className={`${accentText} mr-4 font-mono font-bold opacity-50`}>0{idx + 1}</span>
-                         <span dangerouslySetInnerHTML={{ __html: item }} className="text-gray-100"></span>
+                      <li key={idx} className="flex items-start p-5 bg-[#0f1016] rounded-xl border border-white/5 hover:border-white/10 transition-all group">
+                          <span className={`${accentText} mr-6 font-mono font-bold opacity-60 group-hover:opacity-100`}>0{idx + 1}</span>
+                          <span dangerouslySetInnerHTML={{ __html: item }} className="text-gray-200"></span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
- 
+
               {/* --- 6. CODE SLIDE --- */}
               {currentSlide.type === 'code' && (
                 <div className="h-full flex flex-col">
-                   <div className="flex justify-between items-end border-b border-white/10 pb-4 mb-6">
+                   <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-6">
                       <div>
-                          <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
+                          <h2 className={`font-bold text-white ${isFullscreen ? 'text-4xl' : 'text-3xl'}`}>
                              {currentSlide.title}
                           </h2>
-                          {currentSlide.subtitle && <span className={`${accentText} font-mono text-sm mt-1 block uppercase`}>{currentSlide.subtitle}</span>}
+                          {currentSlide.subtitle && <span className={`${accentText} font-bold text-xs mt-1 block uppercase tracking-wider`}>{currentSlide.subtitle}</span>}
                       </div>
-                      <span className="text-[10px] font-bold text-gray-400 bg-white/10 px-2 py-1 rounded">
-                         {currentSlide.language?.toUpperCase()}
+                      <span className="text-[10px] font-bold text-gray-500 bg-white/5 px-2 py-1 rounded border border-white/5 uppercase tracking-widest">
+                         {currentSlide.language?.toUpperCase() || 'CODE'}
                       </span>
                    </div>
                   
-                   <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-8">
-                      <div className={`md:w-1/3 overflow-y-auto slide-scroll pr-2 space-y-4 ${isFullscreen ? 'text-xl' : 'text-lg'}`}>
+                   <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-6">
+                      <div className={`md:w-1/3 overflow-y-auto slide-scroll pr-2 space-y-3 ${isFullscreen ? 'text-lg' : 'text-base'}`}>
                          {currentSlide.description?.map((desc, idx) => (
-                           <div key={idx} className={`p-4 bg-black/20 border-l-2 ${accentBorder} text-sm font-mono text-gray-400`}>
+                           <div key={idx} className={`p-4 bg-purple-500/5 border-l-2 ${accentBorder} text-sm font-medium text-gray-400 leading-relaxed`}>
                              {desc}
                            </div>
                          ))}
                       </div>
- 
-                      <div className="md:w-2/3 flex flex-col rounded-2xl border border-white/5 bg-[#13141F]/80 backdrop-blur-sm shadow-xl shadow-purple-500/5 relative">
-                         <div className="bg-white/5 px-4 py-2 flex items-center gap-2 border-b border-white/5">
-                            <div className="w-2 h-2 rounded-full bg-red-500/50"></div>
-                            <div className="w-2 h-2 rounded-full bg-yellow-500/50"></div>
-                            <div className="w-2 h-2 rounded-full bg-green-500/50"></div>
+
+                      <div className="md:w-2/3 flex flex-col rounded-xl border border-white/10 bg-[#0B0C15] shadow-inner relative group">
+                         <div className="bg-white/5 px-4 py-2 flex items-center justify-between border-b border-white/5">
+                            <div className="flex items-center gap-1.5">
+                               <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                            </div>
+                            <Terminal className="w-3 h-3 text-gray-600" />
                          </div>
                          <div className="flex-1 overflow-auto slide-scroll p-6">
-                           <pre className={`font-mono leading-relaxed ${isFullscreen ? 'text-lg' : 'text-sm'}`} dangerouslySetInnerHTML={{ __html: highlightedCode }}></pre>
+                           <pre className={`font-mono leading-relaxed ${isFullscreen ? 'text-base' : 'text-sm'}`} dangerouslySetInnerHTML={{ __html: highlightedCode }}></pre>
                          </div>
                       </div>
                    </div>
                 </div>
               )}
- 
+
               {/* --- 7. TABLE SLIDE --- */}
               {currentSlide.type === 'table' && (
                 <div className="h-full flex flex-col">
                   <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
-                     {currentSlide.title}
+                      {currentSlide.title}
                   </h2>
-                  <p className={`${accentText} mb-6 font-mono text-sm uppercase`}>{currentSlide.subtitle}</p>
- 
-                   <div className="flex-1 overflow-hidden rounded-2xl border border-white/5 bg-[#13141F]/80 backdrop-blur-sm">
+                  <p className={`${accentText} mb-6 font-bold text-sm uppercase tracking-wider`}>{currentSlide.subtitle}</p>
+
+                   <div className="flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#0f1016]">
                        <div className="overflow-auto h-full slide-scroll">
                            <table className="w-full text-left border-collapse">
-                               <thead className="sticky top-0 bg-white/10 z-10">
+                               <thead className="sticky top-0 bg-[#1A1B26] z-10 shadow-sm">
                                    <tr>
                                        {currentSlide.tableHeaders?.map((header, idx) => (
-                                           <th key={idx} className={`p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/10`}>{header}</th>
+                                           <th key={idx} className={`p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5`}>{header}</th>
                                        ))}
                                    </tr>
                                </thead>
-                               <tbody className="text-gray-300 font-mono text-sm">
+                               <tbody className="text-gray-300 font-medium text-sm">
                                    {currentSlide.tableRows?.map((row, rIdx) => (
                                        <tr key={rIdx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                            {row.map((cell, cIdx) => (
-                                               <td key={cIdx} className={`p-4 ${cell.includes('PASSED') ? 'text-green-400' : ''}`}>
+                                               <td key={cIdx} className={`p-4 ${cell.includes('PASSED') ? 'text-green-400 font-bold' : ''}`}>
+                                                   {cell.includes('PASSED') && <CheckCircle2 className="w-3 h-3 inline mr-2" />}
                                                    {cell}
                                                </td>
                                            ))}
@@ -940,106 +965,143 @@ function Slides() {
                    </div>
                 </div>
               )}
- 
-              {/* --- 8. IMAGE SLIDE (For Diagrams) --- */}
+
+              {/* --- 8. IMAGE SLIDE --- */}
               {currentSlide.type === 'image' && (
                  <div className="h-full flex flex-col">
-                    <div className="mb-6 border-b border-white/10 pb-4">
+                    <div className="mb-6 border-b border-white/5 pb-4">
                        <h2 className={`font-bold text-white ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
                           {currentSlide.title}
                        </h2>
-                       {currentSlide.subtitle && <p className={`${accentText} font-mono text-sm mt-1 block uppercase`}>{currentSlide.subtitle}</p>}
+                       {currentSlide.subtitle && <p className={`${accentText} font-bold text-sm mt-1 block uppercase tracking-wider`}>{currentSlide.subtitle}</p>}
                     </div>
-                   
-                    <div className="flex-1 flex items-center justify-center bg-black/20 rounded-2xl border border-white/5 p-6 overflow-hidden">
+                    
+                    <div className="flex-1 flex items-center justify-center bg-[#0B0C15] rounded-xl border border-white/5 p-8 overflow-hidden relative">
+                         {/* Subtle grid pattern for diagram background */}
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                        
                         <img
-                            // Using the direct path string
                             src={currentSlide.imageSrc}
                             alt={currentSlide.title}
-                            className="max-h-full max-w-full object-contain shadow-xl rounded-2xl border border-white/5 shadow-purple-500/5"
+                            className="max-h-full max-w-full object-contain shadow-2xl rounded-lg relative z-10"
                         />
                     </div>
-                    {/* Optional Code Description for testing slides */}
                     {currentSlide.description && (
-                        <div className={`mt-4 p-3 bg-black/20 border-l-2 ${accentBorder} text-sm font-mono text-gray-400`}>
-                            {currentSlide.description[0]}
+                        <div className="mt-4 p-4 bg-[#0f1016] border border-white/5 rounded-xl flex items-center gap-3">
+                            <Zap className={`w-5 h-5 ${accentText}`} />
+                            <p className="text-sm font-medium text-gray-400">{currentSlide.description[0]}</p>
                         </div>
                     )}
                  </div>
               )}
- 
-              {/* --- 9. WORKFLOW SLIDE (INTERACTIVE) --- */}
+
+              {/* --- 9. WORKFLOW SLIDE --- */}
               {currentSlide.type === 'workflow' && (
                 <div className="h-full flex flex-col">
-                  <div className="mb-10 border-b border-white/10 pb-4">
+                  <div className="mb-8 border-b border-white/5 pb-4">
                      <h2 className={`font-bold text-white mb-2 ${isFullscreen ? 'text-5xl' : 'text-4xl'}`}>
                         {currentSlide.title}
                      </h2>
-                     <p className={`${accentText} font-mono text-sm uppercase`}>{currentSlide.subtitle}</p>
+                     <p className={`${accentText} font-bold text-sm uppercase tracking-wider`}>{currentSlide.subtitle}</p>
                   </div>
- 
-                  <div className="flex-1 grid grid-cols-7 gap-4 h-full content-start relative">
+
+                  <div className="flex-1 grid grid-cols-7 gap-3 h-full content-start relative pt-8">
                     {/* Visual Connector Line */}
-                    <div className="absolute top-[18%] left-4 right-4 h-0.5 bg-gray-700/50"></div>
-                   
-                    {currentSlide.workflowSteps?.map((step, i) => (
-                      <div key={i} className={`flex flex-col items-center text-center transition-all duration-500 transform ${
-                        i + 1 <= activeStep ? 'opacity-100 scale-100' : 'opacity-30 scale-95'
-                      } ${i + 1 === activeStep ? 'z-10 shadow-[0_0_20px_rgba(150,200,255,0.5)]' : ''}`}>
-                       
-                        {/* Step Circle/Marker */}
-                        <div className={`w-8 h-8 rounded-full border-2 ${colorMap[step.colorKey]} ${i + 1 === activeStep ? 'bg-black/90 scale-125' : 'bg-gray-900/90'} transition-all duration-300 flex items-center justify-center font-bold text-sm text-white relative z-20`}>
-                            {step.step}
+                    <div className="absolute top-[21%] left-10 right-10 h-0.5 bg-gray-800"></div>
+                    
+                    {currentSlide.workflowSteps?.map((step, i) => {
+                      const isActive = i + 1 === activeStep;
+                      const isPast = i + 1 < activeStep;
+                      
+                      const colorClass = {
+                        blue: 'text-blue-400 border-blue-500/50 bg-blue-500/10',
+                        yellow: 'text-yellow-400 border-yellow-500/50 bg-yellow-500/10',
+                        purple: 'text-purple-400 border-purple-500/50 bg-purple-500/10',
+                        green: 'text-green-400 border-green-500/50 bg-green-500/10',
+                        pink: 'text-pink-400 border-pink-500/50 bg-pink-500/10',
+                        cyan: 'text-cyan-400 border-cyan-500/50 bg-cyan-500/10',
+                      }[step.colorKey];
+
+                      return (
+                        <div key={i} className={`flex flex-col items-center text-center transition-all duration-500 relative group ${
+                          isActive || isPast ? 'opacity-100' : 'opacity-40 blur-[1px]'
+                        } ${isActive ? 'scale-105 z-10' : 'scale-100'}`}>
+                          
+                          {/* Step Circle */}
+                          <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm relative z-20 transition-all duration-300 ${
+                            isActive ? 'bg-[#0B0C15] border-white text-white shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 
+                            isPast ? 'bg-gray-800 border-gray-600 text-gray-400' : 'bg-[#0B0C15] border-gray-800 text-gray-600'
+                          }`}>
+                              {isPast ? <CheckCircle2 className="w-5 h-5" /> : step.step}
+                          </div>
+                          
+                          {/* Card */}
+                          <div className={`mt-6 p-4 rounded-xl border w-full h-56 flex flex-col justify-between transition-all duration-300 bg-[#0f1016] ${
+                            isActive ? `${colorClass} shadow-lg` : 'border-white/5 text-gray-500'
+                          }`}>
+                              <div>
+                                  <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${isActive ? 'text-white' : 'text-gray-500'}`}>{step.title}</h3>
+                                  <p className="text-[11px] leading-relaxed font-medium">{step.description}</p>
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-white/5">
+                                <code className="text-[9px] font-mono block truncate opacity-70">
+                                  {step.codeFocus}
+                                </code>
+                              </div>
+                          </div>
                         </div>
-                       
-                        {/* Content Card */}
-                        <div className={`mt-4 p-4 rounded-2xl border ${i + 1 === activeStep ? accentBorder : 'border-white/5'} transition-colors duration-300 h-48 flex flex-col justify-between bg-[#13141F]/80 backdrop-blur-sm ${
-                            i + 1 === activeStep ? 'bg-white/5' : 'bg-white/0'
-                        }`}>
-                            <div>
-                                <h3 className={`text-md font-bold ${i + 1 === activeStep ? colorMapText[step.colorKey] : 'text-gray-400'} mb-1`}>{step.title}</h3>
-                                <p className="text-gray-300 text-[11px] leading-snug">{step.description}</p>
-                            </div>
-                            <code className={`block text-[10px] font-mono p-1 rounded ${i + 1 === activeStep ? 'bg-black/20 text-white' : 'text-gray-600'}`}>
-                                {step.codeFocus}
-                            </code>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Controls hint */}
+                  <div className="mt-auto text-center text-xs text-gray-600 font-mono">
+                    Use Arrow Keys to navigate workflow steps ({activeStep}/{currentSlide.workflowSteps?.length})
                   </div>
                 </div>
               )}
- 
+
             </div>
           </div>
- 
-          {/* FOOTER METADATA */}
-          <div className="bg-[#0B0C15]/80 backdrop-blur-xl border-t border-white/5 p-4 flex justify-between items-center text-[10px] font-mono text-gray-500 uppercase tracking-widest z-20">
-             <div className="flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full bg-purple-500`}></span>
-                <span>Phase: Architecture</span>
+
+          {/* FOOTER METADATA (App Status Bar Style) */}
+          <div className="bg-[#0f1016] border-t border-white/5 px-6 py-3 flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-widest z-20">
+             <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-2 px-2 py-1 rounded bg-white/5 border border-white/5 ${accentText}`}>
+                   <Layers className="w-3 h-3" />
+                   <span>{isAnalysis ? 'Phase: Analysis' : 'Phase: Architecture'}</span>
+                </div>
+                <div className="hidden sm:flex items-center gap-2">
+                   <GitCommit className="w-3 h-3" />
+                   <span>Branch: main</span>
+                </div>
              </div>
             
              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 bg-white/5 rounded px-2 py-1">
-                  <button onClick={prevSlide} disabled={currentSlideIndex === 0 && activeStep === 1} className="hover:text-white disabled:opacity-30 transition">PREV</button>
-                 
-                  <span className={`mx-2 ${accentText}`}>
-                    {currentSlide.type === 'workflow' ? `${activeStep}/${currentSlide.workflowSteps!.length}` : `${String(currentSlideIndex + 1)} / ${String(slides.length)}`}
+                <div className="flex items-center gap-1 bg-black/40 rounded-lg p-1 border border-white/5">
+                  <button onClick={prevSlide} className="p-1 hover:bg-white/10 rounded transition-colors disabled:opacity-30">
+                     <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  
+                  <span className="mx-2 text-white tabular-nums">
+                    {currentSlide.type === 'workflow' ? `${activeStep}.${currentSlide.workflowSteps!.length}` : `${currentSlideIndex + 1} / ${slides.length}`}
                   </span>
-                 
-                  <button onClick={nextSlide} disabled={currentSlideIndex === slides.length - 1 && currentSlide.type !== 'workflow'} className="hover:text-white disabled:opacity-30 transition">NEXT</button>
+                  
+                  <button onClick={nextSlide} className="p-1 hover:bg-white/10 rounded transition-colors disabled:opacity-30">
+                     <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-                <button onClick={toggleFullscreen} className={`hover:${accentText} transition`} title="Toggle Fullscreen">
-                   [ {isFullscreen ? 'EXIT' : 'FULL'} ]
+                
+                <button onClick={toggleFullscreen} className="hover:text-white transition-colors" title="Toggle Fullscreen">
+                   {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
              </div>
           </div>
- 
+
         </div>
       </div>
     </>
   );
 }
- 
+
 export default Slides;
