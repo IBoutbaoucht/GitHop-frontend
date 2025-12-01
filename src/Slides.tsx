@@ -45,7 +45,7 @@ interface SlideData {
   rightContent?: { title: string; text: string };
 }
 
-// --- WORKFLOW DATA (Updated to 7 Steps) ---
+// --- WORKFLOW DATA ---
 const dataProcessingWorkflow: WorkflowStep[] = [
     { step: 1, title: 'Target Identification', description: 'Scouts run queries (by category, age, or topic) to identify new candidate repositories for the pipeline.', codeFocus: 'developerScout.ts', colorKey: 'blue' },
     { step: 2, title: 'Stub Initialization', description: 'New targets are inserted into the database with minimal metadata (ID, Name) and marked sync_status = "stub".', codeFocus: 'db.ts', colorKey: 'yellow' },
@@ -53,11 +53,20 @@ const dataProcessingWorkflow: WorkflowStep[] = [
     { step: 4, title: 'Deep GraphQL Fetch', description: 'Fetches complex metrics (Languages, Issues, Releases, README) in one optimized query to minimize API calls.', codeFocus: 'fetchAndEnrichRepo (GraphQL)', colorKey: 'green' },
     { step: 5, title: 'Hybrid Contributor Check', description: 'Attempts fast REST API fetch first. If 403/204 occurs, initiates the GraphQL commit history scan for resilience.', codeFocus: 'updateMissingContributors()', colorKey: 'pink' },
     { step: 6, title: 'Scoring & Ranking', description: 'Custom algorithms calculate Exploration Score and Growth Velocity based on enriched data, penalizing inactive repos.', codeFocus: 'scoreCalculation.ts', colorKey: 'cyan' },
-    { step: 7, title: 'Final DB Commit', description: 'Updates the entire repo row and sets sync_status = "complete" for low-latency retrieval.', codeFocus: 'DB Update', colorKey: 'blue' },
+    { step: 7, title: 'Final DB Commit', description: 'Updates the entire repo row and sets sync_status = "complete" for low-latency retrieval.', codeFocus: 'db.ts', colorKey: 'blue' },
+];
+
+const historicalVelocityWorkflow: WorkflowStep[] = [
+    { step: 1, title: 'Trigger & Timeframe', description: 'Admin endpoint (/sync/gharchive/weekly) is called, defining the Growth Delta timeframe (e.g., 7 days).', codeFocus: 'newService.ts', colorKey: 'blue' },
+    { step: 2, title: 'BigQuery Scan', description: 'A SQL query is executed against the massive GH Archive public dataset.', codeFocus: 'GH Archive SQL', colorKey: 'yellow' },
+    { step: 3, title: 'Growth Delta Extraction', description: 'The query returns Growth Delta (new star counts), stored temporarily in a Map<FullName, Count> in memory.', codeFocus: 'Map<FullName, Delta>', colorKey: 'purple' },
+    { step: 4, title: 'Repo Lookup', description: 'The list of repository names is validated against our database to find internal IDs.', codeFocus: 'db.findReposByNames', colorKey: 'green' },
+    { step: 5, title: 'Hydration Reuse', description: 'The standard GraphQL Hydration logic is reused to fetch current repo metadata for necessary context.', codeFocus: 'GraphQL reuse', colorKey: 'pink' },
+    { step: 6, title: 'Storage Commit', description: 'The historical growth metric is saved into dedicated columns: stars_growth_7d, stars_growth_30d, etc.', codeFocus: 'repository_stats', colorKey: 'cyan' },
 ];
 
 
-// --- SLIDE DATA ARRAY (25 Slides) ---
+// --- SLIDE DATA ARRAY (28 Slides) ---
 const slides: SlideData[] = [
   // ==========================================
   // PHASE 1: ANALYSIS & REQUIREMENTS (12 Slides)
@@ -193,7 +202,7 @@ const results = await db.vectorQuery(embeddings, intent);`
       '<b>Foundation:</b> Setup DB & CI/CD ✅',
       '<b>Data Arch:</b> Designed Repo/Dev Schemas ✅',
       '<b>Backend Core:</b> Implemented Workers & Services ✅',
-      '<b>Risk Mitigation:</b> Implemented "Stub Hydration" to bypass API Rate Limits ✅'
+      '<b>Risk Mitigation:</b> Implement "Stub Hydration" to bypass API Rate Limits ✅'
     ]
   },
   {
@@ -204,7 +213,7 @@ const results = await db.vectorQuery(embeddings, intent);`
   },
 
   // ==========================================
-  // PHASE 1.5: INTERACTIVE WORKFLOW (NEW)
+  // PHASE 1.5: WORKFLOW PIPELINES (3 Slides - Processing)
   // ==========================================
   {
     type: 'workflow',
@@ -213,8 +222,15 @@ const results = await db.vectorQuery(embeddings, intent);`
     theme: 'architecture',
     workflowSteps: dataProcessingWorkflow
   },
-
-  // --- NEW CODE ANALYSIS SLIDE (Smart Fetching) ---
+  {
+    type: 'workflow',
+    title: 'Historical Velocity Pipeline',
+    subtitle: 'Extracting Growth Delta from BigQuery',
+    theme: 'architecture',
+    workflowSteps: historicalVelocityWorkflow
+  },
+  
+  // SLIDE 15: SMART RATE LIMITING (RE-INSERTED)
   {
     type: 'code',
     title: 'Smart Rate Limiting',
@@ -245,7 +261,7 @@ private async fetchAndSaveContributors(repoGithubId: string, fullName: string): 
 }`
   },
 
-  // --- NEW CODE ANALYSIS SLIDE (Deep Hydration) ---
+  // SLIDE 16: DEEP METRIC ENRICHMENT (RE-INSERTED)
   {
     type: 'code',
     title: 'Deep Metric Enrichment',
@@ -279,9 +295,33 @@ query RepoHydrate($owner: String!, $name: String!) {
 }`
   },
 
-  // ==========================================
-  // PHASE 2: ARCHITECTURE & TESTING (10 Slides - Purple/Pink Theme)
-  // ==========================================
+  // SLIDE 17: LOW LATENCY RETRIEVAL (Was 15)
+  {
+    type: 'code',
+    title: 'Low-Latency Frontend Retrieval',
+    subtitle: 'All Processing for a Simple, Direct API Call',
+    theme: 'architecture',
+    language: 'javascript',
+    description: [
+      'The goal of the entire multi-stage ingestion pipeline is to serve all required metrics from a single, fast database query, eliminating runtime API latency.',
+      'Result: The frontend only needs to fetch pre-calculated data (score, growth, persona, metadata) from PostgreSQL, ensuring sub-100ms response times.',
+      'Evidence: All complex calculations (scoring, persona classification) are pushed to the background workers.'
+    ],
+    code: `// FRONTEND REACT COMPONENT
+useEffect(() => {
+  const fetchFeed = async () => {
+    // Single, direct query to our optimized PostgreSQL database
+    const response = await fetch('/api/feed/latest?sort=score&limit=20');
+    
+    // Data is ready to render instantly (No further calculation needed)
+    const feed = await response.json(); 
+    setRepos(feed);
+  };
+  fetchFeed();
+}, []);`
+  },
+  
+  // SLIDE 18: TECHNICAL ARCHITECTURE INTRO (Was 16)
   {
     type: 'simple',
     title: 'Technical Architecture',
@@ -1009,7 +1049,7 @@ function Slides() {
                   <button onClick={prevSlide} disabled={currentSlideIndex === 0 && activeStep === 1} className="hover:text-white disabled:opacity-30 transition">PREV</button>
                   
                   <span className={`mx-2 ${accentText}`}>
-                    {currentSlide.type === 'workflow' ? `${activeStep}/7` : `${String(currentSlideIndex + 1)} / ${String(slides.length)}`}
+                    {currentSlide.type === 'workflow' ? `${activeStep}/${currentSlide.workflowSteps!.length}` : `${String(currentSlideIndex + 1)} / ${String(slides.length)}`}
                   </span>
                   
                   <button onClick={nextSlide} disabled={currentSlideIndex === slides.length - 1 && currentSlide.type !== 'workflow'} className="hover:text-white disabled:opacity-30 transition">NEXT</button>
